@@ -1,0 +1,13 @@
+"This app is for running NCD-SIM simulations and visualizing the results (see more info about the model under the About tab). You can compare multiple scenarios, and you can also save and load simulation results."
+
+"The simulations are customized and controlled using the left panel. You always need to start by running or loading a baseline simulation, from the left-most tab. Any alternative scenarios generated from the same UI session will use the calibration constants of the currently active baseline scenario. These scenarios will in general not be compatible with a different baseline. An active baseline is indicated by a checkmark in the header of the Baseline tab."
+
+"Technically, a baseline consists of a simulated outdata file (csv-format) and a parameters file (json-format). Baseline simulations are automatically saved in a sub-folder of /UI/scenarios/. A pre-simulated baseline can be loaded from a folder sharing the same name as the data and parameters files within."
+
+"Alternative scenarios are generated or loaded from the Scenarios tab. These scenarios share the same parameters as the baseline, except for adjustment factors of the sizes the risk groups, which can be varied to represent counterfactual developments (e.g. due to interventions). You can run several scenario simulations in parallel."
+
+"Use the Stop/clear button to stop an ongoing simulation and clear the data, name and parameters for that scenario. Note that when the baseline is cleared, so are all other scenarios."
+
+"Results are shown in three separate tabs in the main panel: time series, cross-sectional age-distributions and cumulative sums across several years, within scenarios and groups. For each type of graph, you can use the drop-down menus at the top to select variable, group and measure."
+
+"Hovering over a graph area will show a menu of Plotly controls in the top right next to the plot surface. These controls can be used to e.g. zoom in particular areas of the plot, or to download the plot a png image."

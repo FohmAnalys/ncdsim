@@ -1,0 +1,13 @@
+"Den här appen används för att köra NCD-SIM-simuleringar och visualisera resultaten (se mer information om modellen under fliken Om). Du kan jämföra flera scenarier och även spara och läsa in simuleringsresultat."
+
+"Simuleringarna anpassas och styrs via den vänstra panelen. Du måste alltid börja med att köra eller ladda en baslinjesimulering från den vänstra fliken. Alla alternativa scenarier som genereras under samma användarsession använder kalibreringskonstanterna från den laddade baslinjen. Dessa scenarier är generellt sett inte kompatibla med en annan baslinje. En aktiv baslinje indikeras med en bock i rubriken på Baslinje-fliken."
+
+"Tekniskt sett består en baslinje av en simulerad datafil (i csv-format) och en parameterfil (i json-format). Baslinjesimuleringar sparas automatiskt i en undermapp till /UI/scenarios/. En försimulerad baslinje kan laddas från en mapp som har samma namn som data- och parameterfilerna i mappen."
+
+"Alternativa scenarier genereras eller laddas från fliken Scenarier. Dessa scenarier delar samma parametrar som baslinjen, med undantag för justeringsfaktorer för storleken på riskgrupperna, vilka kan varieras för att representera kontrafaktiska utvecklingar (t.ex. på grund av interventioner). Du kan köra flera scenariosimuleringar parallellt."
+
+"Använd knappen Stoppa/rensa för att stoppa en pågående simulering och rensa data, namn och parametrar för det scenariot. Observera att när baslinjen rensas, rensas även alla andra scenarier."
+
+"Resultaten visas i tre separata flikar i huvudpanelen: tidsserier, tvärsnitt (åldersfördelning) och kumulativa summor över flera år, inom scenarier och grupper. För varje typ av graf kan du använda rullgardinsmenyerna högst upp för att välja variabel, grupp och mått."
+
+"När du håller muspekaren över ett diagram visas en meny med Plotly-kontroller i det övre högra hörnet bredvid diagramytan. Dessa kontroller kan användas för att exempelvis zooma in på specifika områden av diagrammet eller för att ladda ner diagrammet som en png-bild."
