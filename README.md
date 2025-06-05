@@ -1,4 +1,4 @@
-# NCDSim
+# NCDSim test
 
 NCDSim är en simuleringsmodell för att göra framskrivningar av cancer och hjärt- och kärlsjukdomar i den svenska befolkningen, under olika antaganden om förekomsten av riskfaktorer i befolkningen, till exempel andelen rökare. NCDSim har utvecklats av Folkhälsomyndigheten i samarbete med Cancerfonden och Hjärt-Lungfonden.
 
