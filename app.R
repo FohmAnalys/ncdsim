@@ -173,7 +173,7 @@ label_slider_wholegrains <- switch(lang,
                                    "swe" = "Fullkorn")
 info_text_wholegrains <- switch(lang, 
                                 "eng" = "Eats < 100 g wholegrains per day",
-                                "swe" = "Äter < 100 g wholegrains per dag ")
+                                "swe" = "Äter < 100 g fullkorn per dag ")
 
 label_slider_greens <- switch(lang, "eng" = "Vegetables", "swe" = "Grönsaker")
 info_text_greens <- switch(lang, 
@@ -226,14 +226,16 @@ ts_group_list <- switch(lang,
                                "Age group" = c(
                                  "70+ years" = "age_70p",
                                  "Ten-year groups" = "age",
-                                 "16-84 years" = "age_16_84")),
+                                 "16-84 years" = "age_16_84",
+                                 "20-85 years" = "age_20_85")),
                         "swe" =
                           list("Total" = "total", 
                                "Kön" = "sex", 
                                "Åldersgrupp" = c(
                                  "70+ år" = "age_70p",
                                  "Tioårsgrupper" = "age",
-                                 "16-84 år" = "age_16_84"))
+                                 "16-84 år" = "age_16_84",
+                                 "20-85 år" = "age_20_85"))
 ) # end switch
 
 ts_measure_list <- switch(lang,
@@ -270,12 +272,14 @@ acc_group_list <- switch(lang,
                                 "Sex" = "sex", 
                                 "Age group" = c(
                                   "70+ years" = "age_70p",
-                                  "16-84 years" = "age_16_84")),
+                                  "16-84 years" = "age_16_84",
+                                  "20-85 years" = "age_20_85")),
                          "swe"= list("Total" = "total", 
                                      "Kön" = "sex",
                                      "Åldersgrupp" = c(
                                        "70+ år" = "age_70p",
-                                       "16-84 år" = "age_16_84"))
+                                       "16-84 år" = "age_16_84",
+                                       "20-85 år" = "age_20_85"))
 ) # end switch
 
 acc_measure_list <- switch(lang,
@@ -941,13 +945,20 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   } else if (group == "age_16_84") {
     dat_long <- dat_long[age >= 16, ]
     if (lang == "eng") {
-      #dat_long[age <= 15, group := "0-15 years"]
       dat_long[age %in% 16:84, group := "16-84 years"]
       dat_long[age >= 85, group := "85+ years"]
     } else if (lang == "swe") {
-      #dat_long[age <= 15, group := "0-15 år"]
       dat_long[age %in% 16:84, group := "16-84 år"]
       dat_long[age >= 85, group := "85+ år"]
+    }
+  } else if (group == "age_20_85") {
+    dat_long <- dat_long[age >= 20, ]
+    if (lang == "eng") {
+      dat_long[age %in% 20:85, group := "20-85 years"]
+      dat_long[age >= 86, group := "86+ years"]
+    } else if (lang == "swe") {
+      dat_long[age %in% 20:85, group := "20-85 år"]
+      dat_long[age >= 86, group := "86+ år"]
     }
   }
   
@@ -989,13 +1000,15 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                "sex" = "By sex.",
                                "age" = "By age group.", 
                                "age_70p" = "By age group.",
-                               "age_16_84" = "By age group."),
+                               "age_16_84" = "By age group.",
+                               "age_20_85" = "By age group."),
                         "swe" = 
                           list("total" = "Hela befolkningen.",
                                "sex" = "Per kön.",
                                "age" = "Per åldersgrupp.", 
                                "age_70p" = "Per åldersgrupp.",
-                               "age_16_84" = "Per åldersgrupp.")
+                               "age_16_84" = "Per åldersgrupp.",
+                               "age_20_85" = "Per åldersgrupp.")
   ) # end switch                     
   
   ylim_custom <- c(0, NA)
