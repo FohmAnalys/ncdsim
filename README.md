@@ -2,7 +2,7 @@
 
 NCDSim är en simuleringsmodell för att göra framskrivningar av cancer och hjärt- och kärlsjukdomar i den svenska befolkningen, under olika antaganden om förekomsten av riskfaktorer i befolkningen, till exempel andelen rökare. NCDSim har utvecklats av Folkhälsomyndigheten i samarbete med Cancerfonden och Hjärt-Lungfonden.
 
-Modellpopulationen baseras på SCB:s befolkningsregisterdata (LISA). Data om sjukdomsfall har hämtats från Cancerregistret och patientregistret hos Socialstyrelsen. Prevalenser för icke-kost-relaterade riskfaktorer baseras på skattningar från Folkhälsomyndighetens surveyundersökning Nationella folkhälsoenkäten. Kostrelaterade riskfaktorer baseras på skattningar från Livsmedelsverkets surveyundersökning Riksmaten. Relativa risker kopplade till riskfaktorerna baseras på Freisling m.fl. (2020), Garcia m.fl. (2020), Yi-Jie Wang m.fl. (2020) och Global Burden of Disease 2019 (2020).
+Modellpopulationen baseras på SCB:s befolkningsregisterdata (LISA). Data om sjukdomsfall har hämtats från Cancerregistret och patientregistret hos Socialstyrelsen. Prevalenser för icke-kost-relaterade riskfaktorer baseras på skattningar från Folkhälsomyndighetens surveyundersökning Nationella folkhälsoenkäten. Kostrelaterade riskfaktorer baseras på skattningar från Livsmedelsverkets surveyundersökning Riksmaten. Relativa risker kopplade till riskfaktorerna baseras på Bauer et al. (2024), Carr et al. (2024), Freisling m.fl. (2020), Garcia m.fl. (2020), Global Burden of Disease 2019 (2020), Lankester et al. (2021) och Yi-Jie Wang m.fl. (2020).
 
 En teknisk dokumentation av modellen finns [här](https://www.folkhalsomyndigheten.se/contentassets/4a8b81da030747a294c0491736494dac/ncdsim-simuleringsmodell-framtida-utvecklingen-icke-smittsamma-sjukdomar.pdf). Frågor om modellen kan skickas till analysenheten\@folkhalsomyndigheten.se
 
@@ -33,7 +33,7 @@ Modellen körs med funktionen simulate_model() som definieras i huvudskriptet nc
 
 För att köra en baslinjesimulering, sätt argumentet is_baseline till TRUE, när simulate_model() anropas. Övriga viktiga argument är 
 
--   startyear: första simuleringsår (\<=2022)
+-   startyear: första simuleringsår (\<=2024)
 
 -   endyear: sista simuleringsår (\<=2119)
 
@@ -89,6 +89,19 @@ output <- simulate_model(baseyear = 2021,
 ## Parametrar
 
 Modellen läser in parametrar för relativa risker, kostnader, tillskrivningsfaktorer m.m. från en json-fil. Standardvärden för dessa parametrar är definierade i filen baseline.json i katalogen Input/defaults.
+
+- calibrate_cpaf_cancer, calibrate_cpaf_cvd: sätt dessa till 1 för att kalibrera tillskrivningsfaktorerna till parametrarna cpaf_cancer och cpaf_cvd nedan, alternativt till 0 om de ska skattas som fria parametrar
+- cpaf_cancer, cpaf_cvd: önskade värden för de totala tillskrivningsfaktorna för livstilsfaktorer, används om calibrate_cpaf_cancer respektive calibrate_cpaf_cvd ovan sätts till 1
+- age_cutoff_cancer, age_cutoff_cvd: lägsta ålder från vilken sjukdom kan tillskrivas till riskfaktorerna
+- age_cutoff_cancer_high, age_cutoff_cvd_high: högsta ålder upp till vilken sjukdom kan tillskrivas till riskfaktorerna
+- dcost_total_cancer, dcost_total_cvd: totala direkta kostnader för cancer och hjärt-kärlsjukdom som basåret utgår ifrån
+- icost_total_cancer, icost_total_cvd: totala indirekta kostnader för cancer och hjärt-kärlsjukdom som basåret utgår ifrån
+- dcost_growth_cancer, dcost_growth_cvd: årlig procentuell diskontering av kostnaderna för cancer och hjärt-kärlsjukdom
+- dcost_total_base_year: basår för skattning av de totala kostnaderna
+- rr: relativa risker för icke-kostfaktorer
+- rr_cancer_diet: relativa risker för kostfaktorer och cancer
+- rr_cvd_diet: relativa risker för kostfaktorer och hjärt-kärlsjukdom
+- communalities: vikter till cPAF (används inte i nuläget)
 
 
 ## Validering
