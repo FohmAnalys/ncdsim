@@ -33,29 +33,23 @@ fsex <- function(sex) {
   vret[sex == 2] <- "Women"
   return(vret)
 }
-# table(sex = 1:2, fsex = fsex(1:2))
-
-##* END FUNCTION DEFINITIONS **************************************************
-
-
-##*****************************************************************************
-##* validate_ncdsim(): general validation of demographics, stocks and flows.
-##*****************************************************************************
 
 validate_ncdsim <- function(
-  projectroot = getwd(), # path to NCDSim project
-  timestamp = NA,  # timestamp for simulation to validate
-  use_scb_demographics = TRUE) {     
-
+    projectroot = getwd(), # path to NCDSim project
+    timestamp = NA,  # timestamp for simulation to validate
+    use_scb_demographics = TRUE) { 
+  
   ##****************************************************************************
   ## Reading simulation data
   ##****************************************************************************
+  ##*
+
   simdat <- fread(file = paste0(projectroot, "/Output/output_NCDSim_", 
                                 timestamp,".csv"))
-
+  
   firstyear <- min(unique(simdat$year))
   lastyear <- max(unique(simdat$year))
-
+  
   ##****************************************************************************
   ## Reading validation data
   ##****************************************************************************
@@ -63,42 +57,47 @@ validate_ncdsim <- function(
     scbpop <- fread(file = paste0(projectroot, "/Input/pop_counts_scb.csv"))
   }
   
-
+  
   ##****************************************************************************
   ## Reading alignment data
   ##****************************************************************************
+  ##*
+  preval_new <- fread(paste0(projectroot, "/Input/stocks.csv"), sep = ';')
+  incid_new <- fread(paste0(projectroot, "/Input/flows.csv"), sep = ';')
+
   
-  input_path <- paste0(projectroot, "/Input/")
+  preval_new <- dcast(preval_new, year+sex+age ~ stock, value.var = 'N')
+  incid_new <- incid_new[!flow %like% "NA_"]
+  incid_new <- dcast(incid_new, year+sex+age ~ flow, value.var = 'N' )
+  heal_new <- incid_new[, c("year", "sex", "age", "cancer_healthy", "comorb_cancer", "comorb_cvd", "comorb_healthy","cvd_healthy")]
+  colnames(preval_new) <- c("AR","Kon","alder","prev_cancer","prev_comorb", "prev_cvd" ,"totpop")
+  incid_new[, c("cancer_cancer","cancer_healthy", "comorb_cancer", "comorb_comorb",
+                "comorb_cvd", "comorb_healthy", "cvd_cvd", "cvd_healthy", "healthy_healthy") := NULL]
   
-  # Incidences and prevalences
-  incid_new <- fread(paste0(input_path, "incidenser.csv"), sep = ";")
-  preval_new <- fread(paste0(input_path, "prevalenser.csv"), sep = ";")
-  colnames(incid_new) <- c("year","age", "sex", "cvd", "cancer")
-  colnames(preval_new) <- c("year","age", "sex", "cvd", "cancer", "totpop")
+  colnames(incid_new) <- c("AR","Kon","alder","inc_cancer_cvd","inc_cancer_to_cvd","inc_cvd_to_cancer","inc_cvd_cancer","inc_cancer","inc_comorb","inc_cvd")
   
-  incid <- CJ(year = min(incid_new[,(year)]):max(incid_new[, (year)]), 
-              sex = 1:2, age = 0:100)
-  preval <- CJ(year = min(preval_new[,(year)]):max(preval_new[, (year)]), 
-               sex = 1:2, age = 0:100)
+  incid <- CJ(AR = min(incid_new[, (AR)]):max(incid_new[,(AR)]),
+              Kon = 1:2, alder = 0:100)
+  heal <- CJ(year = min(heal_new[, (year)]):max(heal_new[,(year)]),
+             sex = 1:2, age = 0:100)
+  preval <- CJ(AR = min(preval_new[, (AR)]):max(preval_new[,(AR)]),
+               Kon = 1:2, alder = 0:100)
+  incid <- merge(incid, incid_new, by = c("AR", "alder", "Kon" ), all = TRUE)
+  heal <- merge(heal, heal_new, by = c("year", "age", "sex" ), all = TRUE)
+  preval <- merge(preval, preval_new[, c("AR", "alder", "Kon" , "prev_cvd", "prev_cancer", "prev_comorb")],
+                  by = c("AR", "alder", "Kon"  ), all=TRUE)
   
-  incid <- merge(incid, incid_new, by = c("year", "age", "sex"), all = TRUE)
-  preval <- merge(preval, preval_new[,c("year", "age", "sex", "cvd", "cancer")], 
-                  by = c("year","age", "sex"), all = TRUE)
+  incid[, c('inc_cancer_to_cvd', 'inc_cvd_to_cancer') := NULL]
+  colnames(incid) <- c("year","age","sex","inc_cancer_cvd","inc_cvd_cancer","inc_cancer","inc_comorb","inc_cvd")
+  colnames(preval) <- c("year","age","sex","prev_cvd", "prev_cancer", "prev_comorb")
+  colnames(heal) <- c("year", "age", "sex", "heal_cancer_healthy", "heal_comorb_cancer",  "heal_comorb_cvd", "heal_comorb_healthy", "heal_cvd_healthy")
   
-  incid <- melt(incid, id.vars = c("sex", "age", "year"), 
-                value.vars = c("cvd", "cancer"))
-  preval <- melt(preval, id.vars = c("sex", "age", "year"), 
-                 value.vars = c("cvd", "cancer"))
-  colnames(incid) <- c("sex", "age", "year", "NCD", "incidence")
-  colnames(preval) <- c("sex", "age", "year", "NCD", "prevalence")
-  incid <- setnafill(incid, "const", fill = 0, cols = c("incidence")) 
-  preval <- setnafill(preval, "const", fill = 0, cols = c("prevalence")) 
+  incid <- setnafill(incid, "const", fill = 0, cols = c("inc_cvd","inc_cancer","inc_cvd_cancer","inc_cancer_cvd","inc_comorb")) 
+  heal <- setnafill(heal, "const", fill = 0, cols = c("heal_cancer_healthy", "heal_comorb_cancer",  "heal_comorb_cvd", "heal_comorb_healthy", "heal_cvd_healthy"))  
   
-  prevalence_cancer <- preval[NCD == "cancer", .(year, sex, age, prevalence)]
-  prevalence_cvd <- preval[NCD == "cvd", .(year, sex, age, prevalence)]
-  incidence_cancer <- incid[NCD == "cancer", .(year, sex, age, incidence)]
-  incidence_cvd <- incid[NCD == "cvd" & year > 2009, 
-                         .(year, sex, age, incidence)]
+  
+  preval <- setnafill(preval, "const", fill = 0, cols = c("prev_cvd","prev_cancer","prev_comorb"))
+  
   
   ##****************************************************************************
   ## Graphical presentation of simulation results: stocks and flows
@@ -110,11 +109,12 @@ validate_ncdsim <- function(
       paper = "a4r", width = 10, height = 6, pointsize = 8)          
   devpdf <- dev.cur()
   
+  
   ##********************************************
   ## Population frequencies by year, sex and age
   ##********************************************
   
-  t1 <- simdat[, .(pop = sum(s_pop + s_cancer + s_cvd), lbl = "NCDSim"), 
+  t1 <- simdat[, .(pop = sum(s_pop + s_cancer + s_cvd + s_comorb), lbl = "NCDSim"), 
                by = .(year, sex, age)]
   if (use_scb_demographics) {
     t2 <- scbpop[, .(pop = sum(pop), lbl = "SCB"), by = .(year, sex, age)]
@@ -122,7 +122,7 @@ validate_ncdsim <- function(
   } else {
     totdat <- t1
   }
-
+  
   for (y in firstyear:lastyear){
     pdat <- totdat[year == y]
     p <- ggplot(data = pdat, aes(y = pop, x = age, color = lbl)) +
@@ -138,7 +138,7 @@ validate_ncdsim <- function(
   ## Total population by year
   ##********************************************
   
-  t1 <- simdat[, .(pop = sum(s_pop + s_cancer + s_cvd), lbl = "NCDSim"), 
+  t1 <- simdat[, .(pop = sum(s_pop + s_cancer + s_cvd + s_comorb), lbl = "NCDSim"), 
                by = .(year)]
   if (use_scb_demographics) {
     t2 <- scbpop[, .(pop = sum(pop), lbl = "SCB"), by = .(year)]
@@ -159,11 +159,11 @@ validate_ncdsim <- function(
   ##********************************************
   ## Demographic components by year
   ##********************************************
-
-  t1 <- simdat[, .(ndead = sum(f_dead + f_cancer_dead + f_cvd_dead),
+  
+  t1 <- simdat[, .(ndead = sum(f_dead + f_cancer_dead + f_cvd_dead + f_comorb_dead),
                    nborn = sum(f_born),
-                   nimmig = sum(f_immig_pop + f_immig_cvd + f_immig_cancer),
-                   nemig = sum(f_emig_pop + f_emig_cvd + f_emig_cancer),
+                   nimmig = sum(f_immig_pop + f_immig_cvd + f_immig_cancer + f_immig_comorb),
+                   nemig = sum(f_emig_pop + f_emig_cvd + f_emig_cancer + f_emig_comorb),
                    lbl = "NCDSim"), 
                by = year]
   if (use_scb_demographics) {
@@ -186,15 +186,14 @@ validate_ncdsim <- function(
     theme(legend.position = "bottom")
   print(p)
   
-  
   ##*********************************************
   ## Demographic components by year and age group
   ##*********************************************
   
-  t1 <- simdat[, .(ndead = sum(f_dead + f_cancer_dead + f_cvd_dead),
+  t1 <- simdat[, .(ndead = sum(f_dead + f_cancer_dead + f_cvd_dead + f_comorb_dead),
                    nborn = sum(f_born),
-                   nimmig = sum(f_immig_pop + f_immig_cvd + f_immig_cancer),
-                   nemig = sum(f_emig_pop + f_emig_cvd + f_emig_cancer),
+                   nimmig = sum(f_immig_pop + f_immig_cvd + f_immig_cancer + f_immig_comorb),
+                   nemig = sum(f_emig_pop + f_emig_cvd + f_emig_cancer + f_emig_comorb),
                    lbl = "NCDSim"), 
                by = .(year, agegrp = fagegrp10(age))]
   if (use_scb_demographics) {
@@ -221,34 +220,14 @@ validate_ncdsim <- function(
     print(p)
   }
   
-
-  ##*********************************************
-  ## Flows by year, sex and age
-  ##*********************************************
-
-  # pdat <- melt(simdat[year >= (firstyear + 1), 
-  #                     .(year, sex, age, f_dead, f_cvd_dead, f_cancer_dead,
-  #                       f_immig_pop, f_immig_cvd,f_immig_cancer, f_emig_pop,
-  #                       f_emig_cvd, f_emig_cancer)],
-  #              id.vars = c("year", "sex", "age"))
-  # for (y in unique(pdat$year)) {
-  #   p <- ggplot(data = pdat[year == y], 
-  #               aes(y = value, x = age, color = variable)) +
-  #     geom_line(size = 1) +
-  #     facet_wrap(~sex) +
-  #     ggtitle(paste0("Population flows, year: ", y))
-  #   print(p)
-  # }
-
-  
   ##*********************************************
   ## Demographic flows by year
   ##*********************************************
-    
+  
   tmp <- melt(simdat[year >= (firstyear + 1), 
-                     .(year, f_born, f_dead, f_cvd_dead, f_cancer_dead, 
-                       f_immig_pop, f_immig_cvd, f_immig_cancer, f_emig_pop, 
-                       f_emig_cvd, f_emig_cancer)], 
+                     .(year, f_born, f_dead, f_cvd_dead, f_cancer_dead, f_comorb_dead,  
+                       f_immig_pop, f_immig_cvd, f_immig_cancer, f_immig_comorb, f_emig_pop, 
+                       f_emig_cvd, f_emig_cancer, f_emig_comorb)], 
               id.vars = "year")
   pdat <- tmp[, .(sumval = sum(value)), by = .(year, variable)]
   p <- ggplot(data = pdat, aes(y = sumval, x = year, color = variable)) +
@@ -256,43 +235,40 @@ validate_ncdsim <- function(
     ylim(0, NA) +
     ggtitle("Number of births, deaths, emigrations and immigrations, by year")
   print(p)  
-
+  
+  
+  
   
   ##*********************************************
   ## NCD stocks by year
   ##*********************************************
   
-  tmp <- simdat[, .(ncancer = sum(s_cancer), ncvd = sum(s_cvd)), 
-             by = year]
+  tmp <- simdat[, .(ncancer = sum(s_cancer), ncvd = sum(s_cvd), ncomorb = sum(s_comorb)), 
+              by = year]
   pdat <- melt(tmp, id.vars = "year")
-  tmp <- prevalence_cancer[, .(variable = "ncancer_sos",
-                               value = sum(prevalence)), by = year]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
-  tmp <- prevalence_cvd[, .(variable = "ncvd_sos",
-                            value = sum(prevalence)), by = year]
+  tmp = preval[, .(ncancer_sos = sum(prev_cancer), ncvd_sos = sum(prev_cvd), ncomorb_sos = sum(prev_comorb)),
+               by= year]
+  tmp <- melt(tmp, id.vars = "year")
+  
   pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
   p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
     geom_line(size = 1) +
     ylim(0, NA) +
-    ggtitle("Stocks of cancer and CVD (and validation data from SoS), by year")
+    ggtitle("Stocks of cancer, CVD and comorbidity (and validation data from SoS), by year")
   print(p)  
-
+  
+  
   
   ##*********************************************
   ## Total NCD stocks by year
   ##*********************************************
   
-  tmp <- simdat[, .(nstock = sum(s_cancer) + sum(s_cvd)), 
+  tmp <- simdat[, .(nstock = sum(s_cancer) + sum(s_cvd) + sum(s_comorb)), 
                 by = year]
   pdat <- melt(tmp, id.vars = "year")
-  tmp <- prevalence_cancer[, .(variable = "nstock_sos",
-                               value = sum(prevalence)), by = year]
-  
-  tmp1 <- prevalence_cvd[, .(variable = "nstock_sos",
-                            value1 = sum(prevalence)), by = year]
-  sosd <- merge(tmp,tmp1[,c("year","value1")], by = c("year"), all = TRUE)
-  sosd[,value := value + value1]
-  sosd[,value1 := NULL]
+  tmp = preval[, .(nstock_sos = sum(prev_cancer)+ sum(prev_cvd)+ sum(prev_comorb)),
+               by= year]
+  sosd <- melt(tmp, id.vars = "year")
   
   pdat <- rbindlist(list(pdat, sosd), use.names = TRUE)
   p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
@@ -305,17 +281,13 @@ validate_ncdsim <- function(
   ##*********************************************
   ## NCD stocks by year, sex and age group
   ##*********************************************
-
-  tmp <- simdat[, .(ncancer = sum(s_cancer), ncvd = sum(s_cvd)), 
+  
+  tmp <- simdat[, .(ncancer = sum(s_cancer), ncvd = sum(s_cvd), ncomorb = sum(s_comorb)), 
                 by = .(year, sex, agegrp = fagegrp10(age))]
   pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  tmp <- prevalence_cancer[, .(variable = "ncancer_sos",
-                               value = sum(prevalence)), 
-                           by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
-  tmp <- prevalence_cvd[, .(variable = "ncvd_sos",
-                            value = sum(prevalence)), 
-                        by = .(year, sex, agegrp = fagegrp10(age))]
+  tmp = preval[, .(ncancer_sos = sum(prev_cancer), ncvd_sos = sum(prev_cvd), ncomorb_sos = sum(prev_comorb)),
+               by= .(year, sex, agegrp = fagegrp10(age))]
+  tmp <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
   pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
   p <- ggplot(data = pdat[sex == 1], 
               aes(y = value, x = year, color = variable)) +
@@ -325,7 +297,7 @@ validate_ncdsim <- function(
     ggtitle(paste0("Stocks of cancer and CVD (and validation data from SoS), ", 
                    "by year and agegroup, men"))
   print(p)  
-
+  
   p <- ggplot(data = pdat[sex == 2], 
               aes(y = value, x = year, color = variable)) +
     geom_line(size = 1) +
@@ -335,45 +307,6 @@ validate_ncdsim <- function(
                    "by year and agegroup, women"))
   print(p)  
   
-  
-  ##*********************************************
-  ## Total stocks by year, sex and age group
-  ##*********************************************
-
-  tmp <- simdat[, .(nstock = sum(s_cancer) + sum(s_cvd)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  tmp <- prevalence_cancer[, .(variable = "nstock_sos",
-                               value = sum(prevalence)), 
-                           by = .(year, sex, agegrp = fagegrp10(age))]
-  tmp1 <- prevalence_cvd[, .(variable = "ncvd_sos",
-                            value1 = sum(prevalence)), 
-                        by = .(year, sex, agegrp = fagegrp10(age))]
-  sosd <- merge(tmp, tmp1[,c("year","sex", "agegrp", "value1")], 
-                by = c("year","sex", "agegrp"), all = TRUE)
-  sosd[, value := value + value1]
-  sosd[, value1 := NULL]
-  
-  pdat <- rbindlist(list(pdat, sosd), use.names = TRUE)
-  p <- ggplot(data = pdat[sex == 1], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle(paste0("Total stock of diseases (and validation data from SoS), ", 
-                   "by year and agegroup, men"))
-  print(p)  
-  
-  p <- ggplot(data = pdat[sex == 2], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle(paste0("Total stock of diseases (and validation data from SoS), ", 
-                   "by year and agegroup, women"))
-  print(p)  
-  
-
   ##*********************************************
   ## NCD flows by year
   ##*********************************************
@@ -384,336 +317,175 @@ validate_ncdsim <- function(
                   f_cancer_dead = sum(f_cancer_dead),
                   f_pop_cvd = sum(f_pop_cvd),
                   f_cvd_pop = sum(f_cvd_pop),
-                  f_cvd_dead = sum(f_cvd_dead)), 
+                  f_cvd_dead = sum(f_cvd_dead),
+                  f_pop_comorb = sum(f_pop_comorb),
+                  f_comorb_pop = sum(f_comorb_pop),
+                  f_cancer_comorb = sum(f_cancer_comorb),
+                  f_comorb_cancer = sum(f_comorb_cancer),
+                  f_cvd_comorb = sum(f_cvd_comorb),
+                  f_comorb_cvd = sum(f_comorb_cvd),
+                  f_comorb_dead = sum(f_comorb_dead)), 
                 by = year]
   pdat <- melt(tmp, id.vars = "year")
-  tmp <- incidence_cancer[, .(variable = "f_pop_cancer_sos",
-                              value = sum(incidence)), by = year]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
-  tmp <- incidence_cvd[, .(variable = "f_pop_cvd_sos",
-                           value = sum(incidence)), by = year]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
+  pdat$source <- "NCDSim"
+
+  sos_incid <- incid[,
+                     .(f_pop_cancer = sum(inc_cancer),
+                       f_pop_cvd = sum(inc_cvd),
+                       f_cvd_comorb = sum(inc_cvd_cancer),
+                       f_cancer_comorb = sum(inc_cancer_cvd),
+                       f_pop_comorb = sum(inc_comorb)),
+                     by = year]
+  sos_incid = melt(sos_incid, id.vars = "year")
+  sos_incid$source <- "SoS"
+  heal_cvd <- heal[,
+                   .(f_cancer_pop = sum(heal_cancer_healthy),
+                   f_cvd_pop = sum(heal_cvd_healthy),
+                   f_comorb_cvd = sum(heal_comorb_cvd),
+                   f_comorb_cancer = sum(heal_comorb_cancer),
+                   f_comorb_pop = sum(heal_comorb_healthy)),
+                  by = year]
   
-  p <- ggplot(data = pdat[variable %like% "cancer"], 
-              aes(y = value, x = year, color = variable)) +
+  heal_cvd <- melt(heal_cvd, id.vars = "year")
+  heal_cvd$source <- "SoS"
+  pdat <- rbindlist(list(pdat, heal_cvd, sos_incid), use.names = TRUE)
+
+  p <- ggplot(data = pdat[variable %like% "cancer" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     ylim(0, NA) +
     ggtitle("Flows related to cancer (and validation data from SoS), by year")
   print(p)  
-
-  p <- ggplot(data = pdat[variable %like% "cvd"], 
-              aes(y = value, x = year, color = variable)) +
+  
+  p <- ggplot(data = pdat[variable %like% "cvd" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     ylim(0, NA) +
     ggtitle("Flows related to cvd (and validation data from SoS), by year")
   print(p)  
   
-  
-  ##*********************************************
-  ## Total NCD flows by year
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(flow_disease = sum(f_pop_cancer) + sum(f_pop_cvd),
-                  flow_healty = sum(f_cancer_pop) + sum(f_cvd_pop),
-                  flow_dead = sum(f_cancer_dead) + sum(f_cvd_dead)), 
-                by = year]
-  pdat <- melt(tmp, id.vars = "year")
-
-  tmp <- incidence_cancer[, .(variable = "flow_disease_sos",
-                              value = sum(incidence)), 
-                          by = year]
-  tmp1 <- incidence_cvd[, .(variable = "f_pop_cvd_sos",
-                            value1 = sum(incidence)), 
-                        by = year]
-  sosd <- merge(tmp, tmp1[, c("year", "value1")], by = c("year"), all = FALSE)
-  sosd[, value := value + value1]
-  sosd[, value1 := NULL]
-  
-  pdat <- rbindlist(list(pdat, sosd), use.names = TRUE)
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
+  p <- ggplot(data = pdat[variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
-    ggtitle("Total flows (and validation data from SoS), by year")
-  print(p)  
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
+    ylim(0, NA) +
+    ggtitle("Flows related to comorbidity (and validation data from SoS), by year")
+  print(p) 
   
   
   ##*********************************************
   ## NCD flows by year, sex and age group
   ##*********************************************
-  
+  ##*
   tmp <- simdat[year >= (firstyear + 1), 
                 .(f_pop_cancer = sum(f_pop_cancer),
                   f_cancer_pop = sum(f_cancer_pop),
                   f_cancer_dead = sum(f_cancer_dead),
                   f_pop_cvd = sum(f_pop_cvd),
                   f_cvd_pop = sum(f_cvd_pop),
-                  f_cvd_dead = sum(f_cvd_dead)), 
+                  f_cvd_dead = sum(f_cvd_dead),
+                  f_pop_comorb = sum(f_pop_comorb),
+                  f_comorb_pop = sum(f_comorb_pop),
+                  f_cancer_comorb = sum(f_cancer_comorb),
+                  f_comorb_cancer = sum(f_comorb_cancer),
+                  f_cvd_comorb = sum(f_cvd_comorb),
+                  f_comorb_cvd = sum(f_comorb_cvd),
+                  f_comorb_dead = sum(f_comorb_dead)), 
                 by = .(year, sex, agegrp = fagegrp10(age))]
   pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  tmp <- incidence_cancer[, .(variable = "f_pop_cancer_sos",
-                              value = sum(incidence)), 
-                          by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
-  tmp <- incidence_cvd[, .(variable = "f_pop_cvd_sos",
-                           value = sum(incidence)), 
-                       by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- rbindlist(list(pdat, tmp), use.names = TRUE)
+  pdat$source <- "NCDSim"
+
+  sos_incid <- incid[,
+                     .(f_pop_cancer = sum(inc_cancer),
+                       f_pop_cvd = sum(inc_cvd),
+                       f_cvd_comorb = sum(inc_cvd_cancer),
+                       f_cancer_comorb = sum(inc_cancer_cvd),
+                       f_pop_comorb = sum(inc_comorb)),
+                     by = .(year, sex, agegrp = fagegrp10(age))]
+  sos_incid = melt(sos_incid, c("year", "sex", "agegrp"))
+  sos_incid$source <- "SoS"
+  heal_cvd <- heal[,
+                   .(f_cancer_pop = sum(heal_cancer_healthy),
+                     f_cvd_pop = sum(heal_cvd_healthy),
+                     f_comorb_cvd = sum(heal_comorb_cvd),
+                     f_comorb_cancer = sum(heal_comorb_cancer),
+                     f_comorb_pop = sum(heal_comorb_healthy)),
+                   by = .(year, sex, agegrp = fagegrp10(age))]
   
-  p <- ggplot(data = pdat[sex == 1 & variable %like% "cancer"], 
-              aes(y = value, x = year, color = variable)) +
+  heal_cvd <- melt(heal_cvd, id.vars = c("year", "sex", "agegrp"))
+  heal_cvd$source <- "SoS"
+  pdat <- rbindlist(list(pdat, heal_cvd, sos_incid), use.names = TRUE)
+  #pdat[ !variable %like% "sos", source := 'NCDSim']
+  #pdat[ variable %like% "sos", source := 'SoS']
+  
+  p <- ggplot(data = pdat[sex == 1 & variable %like% "cancer" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     facet_wrap(~agegrp, scales = "free") +
     ylim(0, NA) +
     ggtitle(paste0("Flows related to cancer (and validation data from SoS), ",
                    "by year, men"))
   print(p)  
-
-  p <- ggplot(data = pdat[sex == 2 & variable %like% "cancer"], 
-              aes(y = value, x = year, color = variable)) +
+  p <- ggplot(data = pdat[sex == 2 & variable %like% "cancer" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     facet_wrap(~agegrp, scales = "free") +
     ylim(0, NA) +
     ggtitle(paste0("Flows related to cancer (and validation data from SoS), ",
                    "by year, women"))
   print(p)  
-
-  p <- ggplot(data = pdat[sex == 1 & variable %like% "cvd"], 
-              aes(y = value, x = year, color = variable)) +
+  
+  p <- ggplot(data = pdat[sex == 1 & variable %like% "cvd" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     facet_wrap(~agegrp, scales = "free") +
     ylim(0, NA) +
-    ggtitle(paste0("Flows related to CVD (and validation data from SoS), ", 
+    ggtitle(paste0("Flows related to cvd (and validation data from SoS), ",
                    "by year, men"))
-  print(p)  
+  print(p) 
   
-  p <- ggplot(data = pdat[sex == 2 & variable %like% "cvd"], 
-              aes(y = value, x = year, color = variable)) +
+  p <- ggplot(data = pdat[sex == 2 & variable %like% "cvd" & !variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
     facet_wrap(~agegrp, scales = "free") +
     ylim(0, NA) +
-    ggtitle(paste0("Flows related to CVD (and validation data from SoS), ", 
+    ggtitle(paste0("Flows related to cvd (and validation data from SoS), ",
                    "by year, women"))
-  print(p)  
-  
-  
-  ##*********************************************
-  ## total flows by year, sex and age group
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1),
-                .(flow_disease = sum(f_pop_cancer) + sum(f_pop_cvd),
-                  flow_healty = sum(f_cancer_pop) + sum(f_cvd_pop),
-                  flow_dead = sum(f_cancer_dead) + sum(f_cvd_dead)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  tmp <- incidence_cancer[, .(variable = "f_pop_cancer_sos",
-                              value = sum(incidence)), 
-                          by = .(year, sex, agegrp = fagegrp10(age))]
-  tmp1 <- incidence_cvd[, .(variable = "f_pop_cvd_sos",
-                           value1 = sum(incidence)), 
-                       by = .(year, sex, agegrp = fagegrp10(age))]
-  sosd <- merge(tmp, tmp1[, c("year", "sex", "agegrp", "value1")], 
-                by = c("year", "sex", "agegrp"), all = TRUE)
-  sosd[, value := value + value1]
-  sosd[, value1 := NULL]
-  
-  pdat <- rbindlist(list(pdat, sosd), use.names = TRUE)
-  
-  p <- ggplot(data = pdat[sex == 1], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle("Total flows (and validation data from SoS), by year, men")
-  print(p)  
-  
-  p <- ggplot(data = pdat[sex == 2], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle("Total flows (and validation data from SoS), by year, women")
-  print(p)  
-
-  
-  ##***********************************************
-  ## NCD Costs by year
-  ##***********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost_cancer = sum(dcost_cancer), 
-                  cost_cvd = sum(dcost_cvd)), 
-                by = year]
-  pdat <- melt(tmp, id.vars = "year")
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    ylim(0, NA) +
-    ggtitle("Cost of cancer and CVD in SEK, by year")
-  print(p)  
-  
-  
-  ##***********************************************
-  ## NCD Costs by year, indexed to 2024
-  ##***********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost_cancer = sum(dcost_cancer), 
-                  cost_cvd = sum(dcost_cvd)), 
-                by = year]
-  pdat <- melt(tmp, id.vars = "year")
-  nd_cancer = pdat[year == 2024 & variable == "cost_cancer", value]
-  nd_cvd = pdat[year == 2024 & variable == "cost_cvd", value]
-  pdat[variable == "cost_cancer", value := (value / nd_cancer) * 100]
-  pdat[variable == "cost_cvd", value := (value / nd_cvd) * 100]
-
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    ggtitle("Cost of cancer and CVD compared to 2024 in percent, by year")
   print(p) 
   
-  
-  ##***********************************************
-  ## Total Costs by year
-  ##***********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost = sum(dcost_cancer) + sum(dcost_cvd)), 
-                by = year]
-  pdat <- melt(tmp, id.vars = "year")
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
+  p <- ggplot(data = pdat[sex == 1 & variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
+    facet_wrap(~agegrp, scales = "free") +
     ylim(0, NA) +
-    ggtitle("Total cost in SEK, by year")
+    ggtitle(paste0("Flows related to comorbidity (and validation data from SoS), ",
+                   "by year, men"))
   print(p) 
   
-  
-  ##***********************************************
-  ## Total Costs by year, indexed to 2024
-  ##***********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost = sum(dcost_cancer) + sum(dcost_cvd)), 
-                by = year]
-  pdat <- melt(tmp, id.vars = "year")
-  nd = pdat[year == 2024,value]
-  pdat[,value := (value / nd) * 100]
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
+  p <- ggplot(data = pdat[sex == 2 & variable %like% "comorb"], 
+              aes(y = value, x = year, color = variable, linetype = source)) +
     geom_line(size = 1) +
-    ggtitle("Total cost compared to 2024 in percent, by year")
+    scale_linetype_manual(values = c("NCDSim" = "solid", "SoS" = "dashed")) +
+    facet_wrap(~agegrp, scales = "free") +
+    ylim(0, NA) +
+    ggtitle(paste0("Flows related to comorbidity (and validation data from SoS), ",
+                   "by year, women"))
   print(p) 
   
-  
-  ##*********************************************
-  ## NCD costs by year, sex and age group
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost_cancer = sum(dcost_cancer), 
-                  cost_cvd = sum(dcost_cvd)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-
-  p <- ggplot(data = pdat[sex == 1], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp) +
-    ylim(0, NA) +
-    ggtitle("Costs of cancer and CVD, by year and agegroup, men")
-  print(p)  
-  
-  p <- ggplot(data = pdat[sex == 2], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp) +
-    ylim(0, NA) +
-    ggtitle("costs of cancer and CVD in SEK, by year and agegroup, women")
-  print(p)  
-  
-  
-  ##*********************************************
-  ## NCD costs by year, sex and age group, indexed to 2024
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost_cancer = sum(dcost_cancer), 
-                  cost_cvd = sum(dcost_cvd)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  
-  nd_cancer_m = pdat[year == 2024 & variable == "cost_cancer" & sex == 1, value]
-  nd_cancer_w = pdat[year == 2024 & variable == "cost_cancer" & sex == 2, value]
-  nd_cvd_m = pdat[year == 2024 & variable == "cost_cvd" & sex == 1, value]
-  nd_cvd_w = pdat[year == 2024 & variable == "cost_cvd" & sex == 2, value]
-  pdat[variable == "cost_cancer" & sex == 1, 
-       value := (value / nd_cancer_m) * 100]
-  pdat[variable == "cost_cancer" & sex == 2, 
-       value := (value / nd_cancer_w) * 100]
-  pdat[variable == "cost_cvd" & sex == 1, value := (value / nd_cvd_m) * 100]
-  pdat[variable == "cost_cvd" & sex == 2, value := (value / nd_cvd_w) * 100]
-  
-  p <- ggplot(data = pdat[sex == 1], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle(paste0("Costs of cancer and CVD compared to 2024, by year and ", 
-                   "agegroup, men"))
-  print(p)  
-  
-  p <- ggplot(data = pdat[sex == 2], 
-              aes(y = value, x = year, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle(paste0("costs of cancer and CVD compared to 2024, by year and ", 
-                   "agegroup, women"))
-  print(p)  
-  
-  
-  ##*********************************************
-  ## total costs by year, sex and age group
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost = sum(dcost_cancer) + sum(dcost_cvd)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = fsex(sex))) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp) +
-    ylim(0, NA) +
-    ggtitle("Total costs in SEK, by year and agegroup")
-  print(p)  
-  
-  
-  ##*********************************************
-  ## total costs by year, sex and age group, indexed to 2024
-  ##*********************************************
-  
-  tmp <- simdat[year >= (firstyear + 1), 
-                .(cost = sum(dcost_cancer) + sum(dcost_cvd)), 
-                by = .(year, sex, agegrp = fagegrp10(age))]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "agegrp"))
-  
-  nd_m = pdat[year == 2024 & sex == 1, value]
-  nd_w = pdat[year == 2024 & sex == 2, value]
-  pdat[sex == 1, value := (value/nd_m) * 100]
-  pdat[sex == 2, value := (value/nd_w) * 100]
-  
-  p <- ggplot(data = pdat, aes(y = value, x = year, color = fsex(sex))) +
-    geom_line(size = 1) +
-    facet_wrap(~agegrp, scales = "free") +
-    ylim(0, NA) +
-    ggtitle("Total costs compared to 2024, by year and agegroup")
-  print(p)  
   
   
   ##*********************************************
   ## Death rates by year, sex, age and group
   ##*********************************************
   
-  tmp <- simdat[year %% 2 == 0, .(year, sex, age, dr, dr_cancer, dr_cvd)]
+  tmp <- simdat[year %% 2 == 0, .(year, sex, age, dr, dr_cancer, dr_cvd, dr_comorb)]
   pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
   
   p <- ggplot(data = pdat[sex == 1], 
@@ -737,7 +509,7 @@ validate_ncdsim <- function(
   ## Log of Death rates by year, sex, age and group
   ##*********************************************
   
-  tmp <- simdat[year %% 2 == 0, .(year, sex, age, dr, dr_cancer, dr_cvd)]
+  tmp <- simdat[year %% 2 == 0, .(year, sex, age, dr, dr_cancer, dr_cvd, dr_comorb)]
   pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
   
   p <- ggplot(data = pdat[sex == 1], 
@@ -756,39 +528,87 @@ validate_ncdsim <- function(
     ggtitle("Death rates by year, age and group, women, log scale")
   print(p) 
   
+  ##***********************************************
+  ## NCD Costs by year
+  ##***********************************************
   
-  ##********************************************
-  ## Risk factor prevalence by year, sex and age 
-  ##********************************************
+  tmp <- simdat[year >= (firstyear + 1), 
+                .(cost_cancer = sum(dcost_cancer), 
+                  cost_cvd = sum(dcost_cvd)), 
+                by = year]
+  pdat <- melt(tmp, id.vars = "year")
+  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
+    geom_line(size = 1) +
+    ylim(0, NA) +
+    ggtitle("Direct cost of cancer and CVD in SEK, by year")
+  print(p)  
   
-  tmp <- simdat[, .(year, sex, age, prev_alcohol, prev_obesity, prev_smoking, 
-                    prev_inactivity)]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
+  tmp <- simdat[year >= (firstyear + 1), 
+                .(cost_cancer = sum(icost_cancer), 
+                  cost_cvd = sum(icost_cvd)), 
+                by = year]
+  pdat <- melt(tmp, id.vars = "year")
+  p <- ggplot(data = pdat, aes(y = value, x = year, color = variable)) +
+    geom_line(size = 1) +
+    ylim(0, NA) +
+    ggtitle("Indirect cost of cancer and CVD in SEK, by year")
+  print(p)  
   
-  for (y in seq(min(simdat$year), max(simdat$year), by = 2)) {
-    p <- ggplot(data = pdat[year == y], 
-                aes(y = value, x = age, color = variable)) +
+  ##*********************************************
+  ## calibration, raw and normalized för IR
+  ##*********************************************  
+
+  tmp = simdat[year >= (firstyear + 1) & age > 40, .(calibration_cancer = mean(calibration_cancer / (f_pop_cancer/s_pop)),
+                                calibration_cvd = mean(calibration_cvd / (f_pop_cvd/s_pop)),
+                                calibration_comorb = mean(calibration_comorb / (f_pop_comorb/s_pop)),
+                                calibration_cancer_comorb = mean(calibration_cancer_comorb /(f_cancer_comorb/s_cancer) ),
+                                calibration_cvd_comorb = mean(calibration_cvd_comorb / (f_cvd_comorb/s_cvd))),
+                                by = .(sex, age)]
+  
+  tmp2 = simdat[year >= (firstyear + 1) & age > 40, .(calibration_cancer = mean(calibration_cancer),
+                                                     calibration_cvd = mean(calibration_cvd),
+                                                     calibration_comorb = mean(calibration_comorb),
+                                                     calibration_cancer_comorb = mean(calibration_cancer_comorb),
+                                                     calibration_cvd_comorb = mean(calibration_cvd_comorb)),
+                                                     by = .(sex, age)]
+  
+  pdat = melt(tmp2, id.vars=c("age", "sex"))
+  p <- ggplot(data = pdat, 
+              aes(y = value, x = age, color = variable)) +
+    geom_line(size = 1) + 
+    facet_wrap(~fsex(sex)) +
+    ggtitle("Calibration constants, per sex")
+  print(p)
+  
+  
+  pdat = melt(tmp, id.vars=c("age", "sex"))
+  p <- ggplot(data = pdat, 
+              aes(y = value, x = age, color = variable)) +
+    geom_line(size = 1) + 
+    facet_wrap(~fsex(sex)) +
+    ggtitle("Constants normalized by IR, per sex")
+  print(p)
+  
+  ###***************************************************************************
+  ###* mortality calibration
+  t <- simdat[year >= (firstyear + 1), .(mortcal = mean(calibration_mortality)),
+              by=c("year", "sex")]
+  p = ggplot(data = t, aes(x = year, y= mortcal, color = as.factor(sex))) +
+    geom_line(size = 1) + 
+    ggtitle("Mortality adjustment per year and sex")
+  print(p)
+  
+  
+  for (y in (firstyear+1):lastyear){
+    pdat <- simdat[year == y]
+    p <- ggplot(data = pdat, aes(y = calibration_mortality, x = age)) +
       geom_line(size = 1) +
       facet_wrap(~fsex(sex)) +
+      ggtitle(paste0("Mortality adjustment in year", y)) +
       ylim(0, NA) +
-      ggtitle(paste0("Risk factor prevalences by sex, age and group, year: ", 
-                     y))
-    print(p)  
+      theme(legend.position = "bottom")
+    print(p)
   }
-  
-  cl <- c("year", "sex", "age", "prev_fruit", "prev_wholegrains", "prev_greens", 
-          "prev_meat", "prev_salt")
-  tmp <- simdat[, ..cl]
-  pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
-  
-  p <- ggplot(data = pdat[year == min(simdat$year)+2], 
-              aes(y = value, x = age, color = variable)) +
-    geom_line(size = 1) +
-    facet_wrap(~fsex(sex)) +
-    ylim(0, NA) +
-    ggtitle(paste0("Risk factor prevalences by sex, age and group for food"))
-  print(p)  
-    
   
   ##********************************************
   ## PAF by year, sex and age 
@@ -833,7 +653,7 @@ validate_ncdsim <- function(
     ylim(0, NA) +
     ggtitle(paste0("Food related PAF by age and group"))
   print(p)  
- 
+  
   
   ##********************************************
   ## PAF from other riskfactors by year, sex and age 
@@ -860,7 +680,7 @@ validate_ncdsim <- function(
   
   tmp <- simdat[, .(year, sex, age, p_pop_cancer, p_pop_cvd)]
   pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
-
+  
   for (y in seq(min(simdat$year), max(simdat$year), by = 2)) {
     p <- ggplot(data = pdat[year == y], 
                 aes(y = value, x = age, color = variable)) +
@@ -870,6 +690,7 @@ validate_ncdsim <- function(
       ggtitle(paste0("Incidence rate by sex, age and group, year: ", y))
     print(p)  
   }
+  
   
   
   ##****************************************************************************
@@ -885,18 +706,21 @@ validate_ncdsim <- function(
   setkey(simdat, cohort, sex, age)
   simdat[age < 100, ":="(
     s_pop_ = shift(s_pop) + f_born + f_immig_pop - f_dead - f_emig_pop + 
-      f_cancer_pop + f_cvd_pop - f_pop_cancer - f_pop_cvd,
-    s_cancer_ = shift(s_cancer) + f_immig_cancer - f_emig_cancer - 
-      f_cancer_dead + f_pop_cancer - f_cancer_pop,
-    s_cvd_ = shift(s_cvd) + f_immig_cvd - f_emig_cvd - f_cvd_dead + f_pop_cvd - 
-      f_cvd_pop
+      f_cancer_pop + f_cvd_pop - f_pop_cancer - f_pop_cvd + f_comorb_pop - f_pop_comorb,
+    s_cancer_ = shift(s_cancer) + f_pop_cancer - f_cancer_pop + f_immig_cancer - 
+      f_emig_cancer - f_cancer_dead + f_comorb_cancer - f_cancer_comorb,
+    s_cvd_ = shift(s_cvd) + f_pop_cvd - f_cvd_pop + f_immig_cvd - f_emig_cvd - 
+      f_cvd_dead + f_comorb_cvd - f_cvd_comorb,
+    s_comorb_ = shift(s_comorb) +  f_pop_comorb - f_comorb_pop + f_immig_comorb - f_emig_comorb-
+      f_comorb_dead + f_cancer_comorb - f_comorb_cancer + f_cvd_comorb - f_comorb_cvd 
   )]
   simdat[year == firstyear | cohort != shift(cohort) | sex != shift(sex) |
            age != (shift(age) + 1) | age == 100, ":="(
              # NA for non-valid lags.
              s_pop_ = NA,
              s_cancer_ = NA,
-             s_cvd_ = NA
+             s_cvd_ = NA,
+             s_comorb_ = NA
            )]
   
   simdat[, ":="(
@@ -905,7 +729,9 @@ validate_ncdsim <- function(
     diff_s_cancer = s_cancer_ - s_cancer,
     rdiff_s_cancer = s_cancer_ / s_cancer,
     diff_s_cvd = s_cvd_ - s_cvd,
-    rdiff_s_cvd = s_cvd_ / s_cvd
+    rdiff_s_cvd = s_cvd_ / s_cvd,
+    diff_s_comorb = s_comorb_ - s_comorb,
+    rdiff_s_comorb = s_comorb_ / s_comorb
   )]
   
   p <- ggplot(data = simdat[year > firstyear & cohort %% 5 == 0 & age <= 100], 
@@ -962,93 +788,32 @@ validate_ncdsim <- function(
     print(p)
     
   }
-   
+  
+  if (sum(simdat$s_comorb) > 0) {
+    
+    p <- ggplot(data = simdat[year > firstyear & cohort %% 5 == 0 & age <= 100], 
+                aes(y = diff_s_comorb, x = age, color = factor(cohort))) +
+      geom_line(size = 1) + 
+      facet_wrap(~fsex(sex)) +
+      labs(title = paste0("Difference between population with comorbidity calculated ", 
+                          "from flows or directly simulated"))
+    print(p)
+    
+    p <- ggplot(data = simdat[year > firstyear & cohort %% 5 == 0 & age <= 100], 
+                aes(y = rdiff_s_comorb, x = age, color = factor(cohort))) +
+      geom_line(size = 1) + 
+      facet_wrap(~fsex(sex)) +
+      labs(title = paste0("Relative difference between population with comorbidity ", 
+                          "calculated from flows or directly simulated"))
+    print(p)
+    
+  }
+  
   # Close pdf output
   dev.off(devpdf)
-    
   
-  ##****************************************************************************
-  ##* If file for output from ode() exists validation a cohort based validation 
-  ##* of stocks/flows using time step data from ode() is created.
-  ##****************************************************************************
-  
-  filename <- paste0(projectroot, "/output/debug_ode_", timestamp, ".csv")
-  if (file.exists(filename)) {
-
-    pdffilename <- paste0(projectroot, "/output/debug_ode_", timestamp, ".pdf")
-    
-    pdf(file = pdffilename, paper = "a4r", width = 10, height = 6, 
-        pointsize = 8)          
-    devpdf <- dev.cur()
-
-    ## Read csv file with debug data
-    simdat <- fread(file = paste0(projectroot, "/output/debug_ode_", 
-                                  timestamp, ".csv"))
-    simdat[, cohort := year - age]
-
-    # Determine time step within year
-    minyear <- min(simdat$year)
-    minsex <- min(simdat[year == minyear]$sex)
-    minage <- min(simdat[year == minyear]$age)
-    timestep <- length(unique(simdat[year == minyear & sex == minsex & 
-                                       age == minage, 
-                                     (steps = year - time)])) - 1
-    
-    # Select cohorts
-    cohorts <- unique(simdat$cohort)
-    cohorts_ <- sort(cohorts[cohorts %% 5 == 0])
-    
-    
-    ##********************************************
-    ## Stocks by cohort
-    ##********************************************
-    
-    for (c in cohorts_) {
-      pdat <- simdat[cohort == c, .(cohort, sex, time, s_pop, s_cvd, s_cancer)]
-      pdat_ <- melt(pdat, id.vars = c("cohort", "sex", "time"))
-      p <- ggplot(data = pdat_, aes(y = value, x = time, color = variable)) +
-        geom_line(size = 1) +
-        facet_wrap(~fsex(sex)) +
-        labs(title = paste0("Simulated stocks for cohort: ", c),
-             subtitle = paste0("Nr. of timesteps within year: ", timestep)) +
-        ylim(0, NA) +
-        theme(legend.position = "bottom")
-      print(p)
-    }
-
-        
-    ##********************************************
-    ## Flows by cohort
-    ##********************************************
-    
-    for (c in cohorts_) {
-      pdat <- simdat[cohort == c, 
-                     .(cohort, sex, time, f_dead, f_born, f_immig_pop,
-                       f_immig_cvd, f_immig_cancer, f_emig_pop, f_emig_cvd, 
-                       f_emig_cancer, f_pop_cancer, f_pop_cvd, f_cvd_pop, 
-                       f_cancer_pop, f_cvd_dead, f_cancer_dead)]
-      pdat_ <- melt(pdat, id.vars = c("cohort", "sex", "time"))
-      p <- ggplot(data = pdat_, aes(y = value, x = time, color = variable)) +
-        geom_line(size = 1) +
-        facet_wrap(~fsex(sex)) +
-        labs(title = paste0("Simulated flows for cohort: ", c),
-             subtitle = paste0("Nr. of timesteps within year: ", timestep)) +
-        ylim(0, NA) +
-        theme(legend.position = "bottom")
-      print(p)
-    }
-    
-    dev.off(devpdf)
-  } else {
-    cat("No ode() output to validate!\n")
-  }
-
 }
 
 
-# # Validation of demographics, stocks and flows
-#validate_ncdsim(
-#  # path to NCDSim project
-#  projectroot = getwd(),
-  # timestamp for simulation to validate
-#  timestamp = "2025_05_27_14_22_1840")
+
+

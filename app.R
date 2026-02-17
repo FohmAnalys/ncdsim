@@ -146,8 +146,8 @@ info_text_smoking <- switch(lang,
 
 label_slider_alcohol <- switch(lang, "eng" = "Alcohol", "swe" = "Alkohol")
 info_text_alcohol <- switch(lang, 
-                        "eng" = "Audit-c score >= 6 for men and >= 5 for women",
-                        "swe" = "Audit-c >= 6 för män och >= 5 för kvinnor")
+                        "eng" = "Drinks > 12 g alcohol per day",
+                        "swe" = "Dricker > 12 g alkohol per dag")
 
 label_slider_inactivity <- switch(lang,
                                   "eng" = "Insufficient physical activity", 
@@ -202,6 +202,8 @@ baseline_slider_names <-
     "cfact_greens_1",
     "cfact_meat_1",
     "cfact_salt_1",
+    "calibrate_cpaf_cancer",
+    "calibrate_cpaf_cvd",
     "cpaf_cancer",
     "cpaf_cvd",
     "age_cutoff_cancer",
@@ -227,7 +229,7 @@ ts_group_list <- switch(lang,
                                  "70+ years" = "age_70p",
                                  "Ten-year groups" = "age",
                                  "16-84 years" = "age_16_84",
-                                 "20-85 years" = "age_20_85")),
+                                 "Custom age" = "age_custom")),
                         "swe" =
                           list("Total" = "total", 
                                "Kön" = "sex", 
@@ -235,7 +237,7 @@ ts_group_list <- switch(lang,
                                  "70+ år" = "age_70p",
                                  "Tioårsgrupper" = "age",
                                  "16-84 år" = "age_16_84",
-                                 "20-85 år" = "age_20_85"))
+                                 "Anpassad ålder" = "age_custom"))
 ) # end switch
 
 ts_measure_list <- switch(lang,
@@ -245,6 +247,7 @@ ts_measure_list <- switch(lang,
          "Difference vz baseline" = c(
            "Absolute difference" = "abs_diff",
            "Relative difference" = "rel_diff",
+           "Absolute difference of population shares" = "abs_diff_pop_share",
            "Relative difference of population shares" = "rel_diff_pop_share")),
   "swe" = 
     list("Absoluta tal" = "abs",
@@ -252,6 +255,7 @@ ts_measure_list <- switch(lang,
          "Differens gentemot baslinje " = c(
            "Absolut differens" = "abs_diff",
            "Relativ differens" = "rel_diff",
+           "Absolut differens av befolkningsandelar" = "abs_diff_pop_share",
            "Relativ differens av befolkningsandelar" = "rel_diff_pop_share"))
 ) # end switch
 
@@ -273,13 +277,14 @@ acc_group_list <- switch(lang,
                                 "Age group" = c(
                                   "70+ years" = "age_70p",
                                   "16-84 years" = "age_16_84",
-                                  "20-85 years" = "age_20_85")),
+                                  "Custom age" = "age_custom")),
+
                          "swe"= list("Total" = "total", 
                                      "Kön" = "sex",
                                      "Åldersgrupp" = c(
                                        "70+ år" = "age_70p",
                                        "16-84 år" = "age_16_84",
-                                       "20-85 år" = "age_20_85"))
+                                       "Anpassad ålder" = "age_custom"))
 ) # end switch
 
 acc_measure_list <- switch(lang,
@@ -341,16 +346,25 @@ all_var_names <- c(
   "f_immig_pop",
   "f_immig_cvd",
   "f_immig_cancer",
+  "f_immig_comorb",
+  "f_pop_cancer",
   "f_cancer_pop",
   "f_pop_cvd",
   "f_cvd_pop",
+  "f_pop_comorb",
+  "f_comorb_pop",
+  "f_cancer_comorb",
+  "f_comorb_cancer",
+  "f_cvd_comorb",
+  "f_comorb_cvd",
   "f_cancer_dead",
   "f_cvd_dead",
+  "f_comorb_dead",
   "dcost_unit_cancer",
   "icost_unit_cancer",
   "dcost_unit_cvd",
   "icost_unit_cvd",
-  "dcost_cancer", 
+  "dcost_cancer",
   "dcost_cvd",
   "icost_cancer",
   "icost_cvd",
@@ -371,38 +385,67 @@ all_var_names <- c(
   "paf_cvd_greens",
   "paf_cvd_meat",
   "paf_cvd_salt",
+  "paf_cancer_comorb_fruit",
+  "paf_cancer_comorb_wholegrains",
+  "paf_cancer_comorb_greens",
+  "paf_cancer_comorb_meat",
+  "paf_cancer_comorb_salt",
+  "paf_cvd_comorb_fruit",
+  "paf_cvd_comorb_wholegrains",
+  "paf_cvd_comorb_greens",
+  "paf_cvd_comorb_meat",
+  "paf_cvd_comorb_salt",
+  "paf_comorb_fruit",
+  "paf_comorb_wholegrains",
+  "paf_comorb_greens",
+  "paf_comorb_meat",
+  "paf_comorb_salt",
   "s_cancer",
   "s_cvd",
+  "s_comorb",
   "s_dead_cancer",
   "s_dead_cvd",
+  "s_dead_comorb",
   "s_dead",
   "f_emig_pop",
   "f_emig_cvd",
   "f_emig_cancer",
-  "f_pop_cancer",
+  "f_emig_comorb",
+  "heal_cvd_pop",
+  "heal_cancer_pop",
+  "heal_comorb_pop",
+  "heal_comorb_cancer",
+  "heal_comorb_cvd",
   "dr",
   "dr_cancer",
   "dr_cvd",
+  "dr_comorb",
   "prev_alcohol",
   "prev_obesity",
   "prev_smoking",
   "prev_inactivity",
-  "paf_cvd_other",
   "paf_cvd_smoking",
   "paf_cvd_inactivity",
   "paf_cvd_obesity",
   "paf_cvd_alcohol",
   "cpaf_diet_cvd",
   "p_pop_cvd",
-  "paf_cancer_other",
   "paf_cancer_smoking",
   "paf_cancer_inactivity",
   "paf_cancer_obesity",
   "paf_cancer_alcohol",
   "cpaf_diet_cancer",
   "p_pop_cancer",
+  "paf_cancer_other",
+  "paf_cvd_other",
+  "paf_comorb_other",
+  "paf_cancer_comorb_other",
+  "paf_cvd_comorb_other",
   "calibration_cancer",
   "calibration_cvd",
+  "calibration_comorb",
+  "calibration_cancer_comorb",
+  "calibration_cvd_comorb",
   "calibration_mortality"
 )
 
@@ -410,21 +453,31 @@ all_var_names <- c(
 baseline_vars_to_check <- c(
   "paf_cancer_other", 
   "paf_cvd_other", 
+  "paf_comorb_other",
+  "paf_cancer_comorb_other",
+  "paf_cvd_comorb_other",
   "icost_unit_cancer",
   "dcost_unit_cancer",
   "icost_unit_cvd",
   "dcost_unit_cvd",
   "calibration_cancer", 
   "calibration_cvd",
+  "calibration_comorb",
+  "calibration_cancer_comorb",
+  "calibration_cvd_comorb",
   "calibration_mortality"
 )
 
 ## All parameter names
 all_par_names <- c(
+  "calibrate_cpaf_cancer",
+  "calibrate_cpaf_cvd",
   "cpaf_cancer",
   "cpaf_cvd",
   "age_cutoff_cancer",
   "age_cutoff_cvd",
+  "age_cutoff_cancer_high",
+  "age_cutoff_cvd_high",
   "dcost_total_cancer",
   "icost_total_cancer",
   "dcost_growth_cancer",
@@ -437,13 +490,13 @@ all_par_names <- c(
   "rr_cvd_diet",
   "communalities")
 
-## Variables to plot (and keys) in time series
+## Variables to plot (and keys)
 var_list  <- switch(lang,
                     "eng" =  
                       list("Cancer and CVD combined" = c(
-                        "Ongoing cases" = "s_ncd", 
-                        "New cases" = "f_ncd", 
-                        "Deaths" = "f_ncd_dead",
+                        "Ongoing cases" = "ongoing_cases_ncd", 
+                        "New cases" = "new_cases_ncd", 
+                        "Deaths" = "deaths_ncd",
                         "Healthcare costs" = "dcost_ncd_msek",
                         "Indirect costs" = "icost_ncd_msek"),
                         "Non-diet risk factors" = c(
@@ -458,27 +511,31 @@ var_list  <- switch(lang,
                           "Meat" = "s_meat",
                           "Salt" = "s_salt"),
                         "Demographics" = c(
-                          "Population size" = "total_pop",
+                          "Population size" = "pop_total",
                           "Births" = "f_born",
-                          "Deaths" = "f_total_dead"),
+                          "Deaths" = "deaths_total"),
                         "Cancer" = c(
-                          "Ongoing cases" = "s_cancer",
-                          "New cases" = "f_cancer",
-                          "Deaths" = "f_cancer_dead",
+                          "Ongoing cases" = "ongoing_cases_cancer",
+                          "New cases" = "new_cases_cancer",
+                          "Deaths" = "deaths_cancer",
                           "Healthcare costs" = "dcost_cancer_msek",
                           "Indirect costs" = "icost_cancer_msek"),
                         "CVD" = c(
-                          "Ongoing cases" = "s_cvd",
-                          "New cases" = "f_cvd",
-                          "Deaths" = "f_cvd_dead",
+                          "Ongoing cases" = "ongoing_cases_cvd",
+                          "New cases" = "new_cases_cvd",
+                          "Deaths" = "deaths_cvd",
                           "Healthcare costs" = "dcost_cvd_msek",
-                          "Indirect costs" = "icost_cvd_msek")
+                          "Indirect costs" = "icost_cvd_msek"),
+                        "Comorbidity" = c(
+                          "Ongoing cases" = "ongoing_cases_comorb",
+                          "New cases" = "new_cases_comorb",
+                          "Deaths" = "deaths_comorb")
                       ),
                     "swe" =
                       list("Cancer plus hjärt-kärl" = c(
-                        "Pågående fall" = "s_ncd",
-                        "Nya fall" = "f_ncd",
-                        "Dödsfall" = "f_ncd_dead",
+                        "Pågående fall" = "ongoing_cases_ncd",
+                        "Nya fall" = "new_cases_ncd",
+                        "Dödsfall" = "deaths_ncd",
                         "Sjukvårdskostnader" = "dcost_ncd_msek",
                         "Indirekta kostnader" = "icost_ncd_msek"),
                         "Riskfaktorer, icke-kost" = c(
@@ -493,31 +550,35 @@ var_list  <- switch(lang,
                           "Kött" = "s_meat",
                           "Salt" = "s_salt"),
                         "Demografi" = c(
-                          "Befolkningsstorlek" = "total_pop",
+                          "Befolkningsstorlek" = "pop_total",
                           "Födslar" = "f_born",
-                          "Dödsfall" = "f_total_dead"),
+                          "Dödsfall" = "deaths_total"),
                         "Cancer" = c(
-                          "Pågående fall" = "s_cancer",
-                          "Nya fall" = "f_cancer",
-                          "Dödsfall" = "f_cancer_dead",
+                          "Pågående fall" = "ongoing_cases_cancer",
+                          "Nya fall" = "new_cases_cancer",
+                          "Dödsfall" = "deaths_cancer",
                           "Sjukvårdskostnader" = "dcost_cancer_msek",
                           "Indirekta kostnader" = "icost_cancer_msek"),
                         "Hjärt-kärl" = c(
-                          "Pågående fall" = "s_cvd",
-                          "Nya fall" = "f_cvd",
-                          "Dödsfall" = "f_cvd_dead",
+                          "Pågående fall" = "ongoing_cases_cvd",
+                          "Nya fall" = "new_cases_cvd",
+                          "Dödsfall" = "deaths_cvd",
                           "Sjukvårdskostnader" = "dcost_cvd_msek",
-                          "Indirekta kostnader" = "icost_cvd_msek")
+                          "Indirekta kostnader" = "icost_cvd_msek"),
+                        "Samsjuklighet" = c(
+                          "Pågående fall" = "ongoing_cases_comorb",
+                          "Nya fall" = "new_cases_comorb",
+                          "Dödsfall" = "deaths_comorb")
                       )
 ) # end switch
 
-## Labels to be used on y-axis for time series graphs
+## Labels to be used on y-axis for graphs
 var_labels  <- switch(lang,
                       "eng" = 
                         list(
-                          "f_ncd" = "New cases",
-                          "s_ncd" = "Ongoing cases",
-                          "f_ncd_dead" = "NCD deaths",
+                          "new_cases_ncd" = "New cases",
+                          "ongoing_cases_ncd" = "Ongoing cases",
+                          "deaths_ncd" = "Deaths",
                           "dcost_ncd_msek" = "Costs (million SEK)",
                           "icost_ncd_msek" = "Costs (million SEK)",
                           "s_alcohol" = "Persons in risk group",
@@ -529,25 +590,28 @@ var_labels  <- switch(lang,
                           "s_greens" = "Persons in risk group",
                           "s_meat" = "Persons in risk group",
                           "s_salt" = "Persons in risk group",
-                          "total_pop" = "Population size",
+                          "pop_total" = "Population size",
                           "f_born" = "Births",
-                          "f_total_dead" = "Deaths (all causes)",
-                          "s_cancer" = "Ongoing cases",
-                          "f_cancer" = "New cases",
-                          "f_cancer_dead" = "Cancer deaths",
+                          "deaths_total" = "Deaths (all causes)",
+                          "ongoing_cases_cancer" = "Ongoing cases",
+                          "new_cases_cancer" = "New cases",
+                          "deaths_cancer" = "Deaths",
                           "dcost_cancer_msek" = "Costs (million SEK)",
                           "icost_cancer_msek" = "Costs (million SEK)",
-                          "s_cvd" = "Ongoing cases",
-                          "f_cvd" = "New cases",
-                          "f_cvd_dead" = "CVD deaths",
+                          "ongoing_cases_cvd" = "Ongoing cases",
+                          "new_cases_cvd" = "New cases",
+                          "deaths_cvd" = "Deaths",
                           "dcost_cvd_msek" = "Costs (million SEK)",
-                          "icost_cvd_msek" = "Costs (million SEK)"
+                          "icost_cvd_msek" = "Costs (million SEK)",
+                          "ongoing_cases_comorb" = "Ongoing cases",
+                          "new_cases_comorb" = "New cases",
+                          "deaths_comorb" = "Deaths" 
                         ),
                       "swe" = 
                         list(
-                          "f_ncd" = "Nya fall",
-                          "s_ncd" = "Pågående fall",
-                          "f_ncd_dead" = "Dödsfall",
+                          "new_cases_ncd" = "Nya fall",
+                          "ongoing_cases_ncd" = "Pågående fall",
+                          "deaths_ncd" = "Dödsfall",
                           "dcost_ncd_msek" = "Kostnader (MSEK)",
                           "icost_ncd_msek" = "Kostnader (MSEK)",
                           "s_alcohol" = "Personer i riskgrupp",
@@ -559,19 +623,22 @@ var_labels  <- switch(lang,
                           "s_greens" = "Personer i riskgrupp",
                           "s_meat" = "Personer i riskgrupp",
                           "s_salt" = "Personer i riskgrupp",
-                          "total_pop" = "Befolkningsstorlek",
+                          "pop_total" = "Befolkningsstorlek",
                           "f_born" = "Födslar",
-                          "f_total_dead" = "Dödsfall (alla orsaker)",
-                          "f_cancer" = "Nya fall",
-                          "s_cancer" = "Pågående fall",
-                          "f_cancer_dead" = "Dödsfall",
+                          "deaths_total" = "Dödsfall (alla orsaker)",
+                          "new_cases_cancer" = "Nya fall",
+                          "ongoing_cases_cancer" = "Pågående fall",
+                          "deaths_cancer" = "Dödsfall",
                           "dcost_cancer_msek" = "Kostnader (MSEK)",
                           "icost_cancer_msek" = "Kostnader (MSEK)",
-                          "f_cvd" = "Nya fall",
-                          "s_cvd" = "Pågående fall",
-                          "f_cvd_dead" = "Dödsfall",
+                          "new_cases_cvd" = "Nya fall",
+                          "ongoing_cases_cvd" = "Pågående fall",
+                          "deaths_cvd" = "Dödsfall",
                           "dcost_cvd_msek" = "Kostnader (MSEK)",
-                          "icost_cvd_msek" = "Kostnader (MSEK)"
+                          "icost_cvd_msek" = "Kostnader (MSEK)",
+                          "ongoing_cases_comorb" = "Pågående fall",
+                          "new_cases_comorb" = "Nya fall",
+                          "deaths_comorb" = "Dödsfall"
                         )
 ) # end switch                    
 
@@ -612,11 +679,11 @@ run_scen <- function(scen, input, sim_status, baseline_active,
   simyears <- input$slider_simyears
   intervention_years <- input[[paste0("slider_intervention_years_", scen)]]
   
-  ## Require that start year is max 2022
-  if (simyears[1] > 2022) {
+  ## Require that start year is max 2024
+  if (simyears[1] > 2024) {
     showNotification(switch(lang,
-                  "eng" = "The simulation must start from year 2022 or earlier",
-                  "swe" = "Simuleringen måste påbörjas år 2022 eller tidigare"
+                  "eng" = "The simulation must start from year 2024 or earlier",
+                  "swe" = "Simuleringen måste påbörjas år 2024 eller tidigare"
     ), duration=3
     )
     return(NULL)
@@ -670,10 +737,14 @@ run_scen <- function(scen, input, sim_status, baseline_active,
       path = paste0(baseline_path, input$scen_1_name, ".json"),
       
       x = list(
+        calibrate_cpaf_cancer = as.integer(input$calibrate_cpaf_cancer),
+        calibrate_cpaf_cvd = as.integer(input$calibrate_cpaf_cvd),
         cpaf_cancer = input$cpaf_cancer,
         cpaf_cvd = input$cpaf_cvd,
-        age_cutoff_cancer = input$age_cutoff_cancer,
-        age_cutoff_cvd = input$age_cutoff_cvd,
+        age_cutoff_cancer = input$age_cutoff_cancer[1],
+        age_cutoff_cvd = input$age_cutoff_cvd[1],
+        age_cutoff_cancer_high = input$age_cutoff_cancer[2],
+        age_cutoff_cvd_high = input$age_cutoff_cvd[2],
         dcost_total_cancer = default_parameters$dcost_total_cancer,
         icost_total_cancer = default_parameters$icost_total_cancer,
         dcost_growth_cancer = default_parameters$dcost_growth_cancer,
@@ -837,7 +908,8 @@ scan_log <- function(scen, root = PROJECTROOT) {
 ## for plotting are also created
 
 create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years, 
-                        var_list, var_labels, input, data_only = FALSE) {
+                        age_limits_custom = c(0, 100), var_list, var_labels, 
+                        input, data_only = FALSE) {
   
   
   ## Combine data from all scenarios
@@ -847,7 +919,7 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   scen_ids <- dat_wide[, unique(scen_id)]
   n_scen <- length(scen_ids)
   
-  if (measure %in% c("abs_diff", "rel_diff", "rel_diff_pop_share") & n_scen<2) {
+  if (measure %in% c("abs_diff", "rel_diff", "abs_diff_pop_share", "rel_diff_pop_share") & n_scen<2) {
     showNotification(switch(lang,
           "eng" = "Please load a comparison scenario", 
           "swe" = "Du behöver ladda ett jämförelsescenario för denna diagramtyp"
@@ -857,23 +929,51 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   }
   
   ## Derived variables
-  dat_wide[, s_ncd := s_cvd + s_cancer]
-  dat_wide[, f_cancer := f_pop_cancer + f_immig_cancer]
-  dat_wide[, f_cvd := f_pop_cvd + f_immig_cvd]
-  dat_wide[, f_ncd := f_cancer + f_cvd]
-  dat_wide[, f_ncd_dead := f_cancer_dead + f_cvd_dead]
-  dat_wide[, f_total_dead := f_dead + f_ncd_dead]
-  dat_wide[, total_pop := s_pop + s_cancer + s_cvd]
-  dat_wide[, s_alcohol := prev_alcohol * total_pop]
-  dat_wide[, s_obesity := prev_obesity * total_pop]
-  dat_wide[, s_smoking := prev_smoking * total_pop]
-  dat_wide[, s_inactivity := prev_inactivity * total_pop]
+  ## Note that defaults for cancer and cvd stocks and flows is to include those
+  ## with comorbidity. We can thus not count total ncd as the sum of cancer and 
+  ## cvd, as that would double count those with comorbidity. We start by 
+  ## defining total flow for comorbidity, to be added to those for cancer and 
+  ## cvd separately, respectively
+
+  dat_wide[, new_cases_comorb := f_pop_comorb + f_immig_comorb + 
+             f_cancer_comorb + f_cvd_comorb]
+  ## Rename the following vars for consistency with other variable names
+  dat_wide[, ongoing_cases_comorb := s_comorb]
+  dat_wide[, deaths_comorb := f_comorb_dead]
   
-  dat_wide[, s_fruit := prev_fruit * total_pop]
-  dat_wide[, s_wholegrains := prev_wholegrains * total_pop]
-  dat_wide[, s_greens := prev_greens * total_pop]
-  dat_wide[, s_meat := prev_meat * total_pop]
-  dat_wide[, s_salt := prev_salt * total_pop]
+  dat_wide[, ongoing_cases_cancer := s_cancer + ongoing_cases_comorb]
+  dat_wide[, ongoing_cases_cvd := s_cvd + ongoing_cases_comorb]
+  
+  dat_wide[, ongoing_cases_ncd := s_cvd + s_cancer + ongoing_cases_comorb]
+  ## Note that flow of cancer into comorbidity is subtracted not to double count
+  dat_wide[, new_cases_cancer := f_pop_cancer + f_immig_cancer + 
+             new_cases_comorb - f_cancer_comorb]
+  ## Note that flow of cvd into comorbidity is subtracted not to double count
+  dat_wide[, new_cases_cvd := f_pop_cvd + f_immig_cvd + new_cases_comorb -
+             f_cvd_comorb]
+  
+  ## Note that new_cases_comorb is subtracted since it was added to both cancer
+  ## and cvd above
+  dat_wide[, new_cases_ncd := new_cases_cancer + new_cases_cvd - 
+             new_cases_comorb]
+  
+  dat_wide[, deaths_cancer := f_cancer_dead + deaths_comorb]
+  dat_wide[, deaths_cvd := f_cvd_dead + deaths_comorb]
+  
+  dat_wide[, deaths_ncd := deaths_cancer + deaths_cvd - deaths_comorb]
+  dat_wide[, deaths_total := f_dead + deaths_ncd]
+  dat_wide[, pop_total := s_pop + ongoing_cases_ncd]
+  
+  dat_wide[, s_alcohol := prev_alcohol * pop_total]
+  dat_wide[, s_obesity := prev_obesity * pop_total]
+  dat_wide[, s_smoking := prev_smoking * pop_total]
+  dat_wide[, s_inactivity := prev_inactivity * pop_total]
+  
+  dat_wide[, s_fruit := prev_fruit * pop_total]
+  dat_wide[, s_wholegrains := prev_wholegrains * pop_total]
+  dat_wide[, s_greens := prev_greens * pop_total]
+  dat_wide[, s_meat := prev_meat * pop_total]
+  dat_wide[, s_salt := prev_salt * pop_total]
   
   ## Compute costs in million SEK
   dat_wide[, dcost_ncd_msek := 
@@ -891,12 +991,11 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
     melt(dat_wide, id.vars = c("scen_id", "year", "sex", "age"))
   )
   
-  
   ## Extract scenario names
   scen_names <- character()
   
   ## Set default formatting function for axes and hover label
-  if (measure %in% c("pop_share", "rel_diff", "rel_diff_pop_share")) {
+  if (measure %in% c("pop_share", "rel_diff", "abs_diff_pop_share", "rel_diff_pop_share")) {
     format_fun <- pretty_print
   } else {
     format_fun <- int_print
@@ -951,14 +1050,12 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
       dat_long[age %in% 16:84, group := "16-84 år"]
       dat_long[age >= 85, group := "85+ år"]
     }
-  } else if (group == "age_20_85") {
-    dat_long <- dat_long[age >= 20, ]
-    if (lang == "eng") {
-      dat_long[age %in% 20:85, group := "20-85 years"]
-      dat_long[age >= 86, group := "86+ years"]
-    } else if (lang == "swe") {
-      dat_long[age %in% 20:85, group := "20-85 år"]
-      dat_long[age >= 86, group := "86+ år"]
+  } else if (group == "age_custom") {
+    dat_long <- dat_long[age %between% age_limits_custom]
+    dat_long <- dat_long[, group := paste0(age_limits_custom[1], 
+       "-", age_limits_custom[2], " years")]
+    if (lang == "swe") {
+      dat_long[, group := sub("years", "år", group)]
     }
   }
   
@@ -1001,14 +1098,40 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                "age" = "By age group.", 
                                "age_70p" = "By age group.",
                                "age_16_84" = "By age group.",
-                               "age_20_85" = "By age group."),
+                               "age_custom" = paste0("Age ", 
+                                                     age_limits_custom[1],
+                                                     "-",
+<<<<<<< HEAD
+                                                     age_limits_custom[2]),
+                                                     " years."),
+||||||| parent of ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
+                                                     age_limits_custom[2]),
+                                                     "."),
+=======
+                                                     age_limits_custom[2],
+                                                     " years.")
+                               ),
+>>>>>>> ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
                         "swe" = 
                           list("total" = "Hela befolkningen.",
                                "sex" = "Per kön.",
                                "age" = "Per åldersgrupp.", 
                                "age_70p" = "Per åldersgrupp.",
                                "age_16_84" = "Per åldersgrupp.",
-                               "age_20_85" = "Per åldersgrupp.")
+                               "age_custom" = paste0("Ålder ", 
+                                                     age_limits_custom[1],
+                                                     "-",
+<<<<<<< HEAD
+                                                     age_limits_custom[2]),
+                                                     " år.")
+||||||| parent of ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
+                                                     age_limits_custom[2]),
+                                                     ".")
+=======
+                                                     age_limits_custom[2],
+                                                     " år.")
+                                                     )
+>>>>>>> ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
   ) # end switch                     
   
   ylim_custom <- c(0, NA)
@@ -1025,7 +1148,7 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   if (measure == "pop_share") {
     
     dat_by_group[variable == var_to_plot, value := value / 
-                   dat_by_group[variable == "total_pop", value]]
+                   dat_by_group[variable == "pop_total", value]]
     if (var_to_plot %in% c("dcost_ncd_msek", 
                            "dcost_cvd_msek", 
                            "dcost_cancer_msek",
@@ -1049,10 +1172,13 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                             "eng" = "Cases per 1 000 population",
                             "swe" = "Fall per tusen invånare")
       format_fun <- int_print
-    } else if (var_to_plot %in% c("f_ncd_dead",
-                                  "f_cancer_dead",
-                                  "f_cvd_dead",
-                                  "f_total_dead")
+    } else if (var_to_plot %in% c(
+                                  "deaths_ncd",
+                                  "deaths_cancer",
+                                  "deaths_cvd",
+                                  "deaths_total",
+                                  "deaths_comorb"
+                                  )
     ) {
       dat_by_group[variable == var_to_plot, value := value * 10^3]
       ylab_custom <- switch(lang,
@@ -1114,11 +1240,36 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
     )
   }
   
+  ## Create graph diffed as a proportion vz baseline
+  if (measure == "abs_diff_pop_share" & n_scen > 1) {
+    
+    dat_by_group[variable == var_to_plot, value := value / 
+                   dat_by_group[variable == "pop_total", value]]
+    
+    for (scen in n_scen:2) {
+      dat_by_group[scen_id == scen_ids[scen], value := value -
+                     dat_by_group[scen_id == scen_ids[1], value]]
+    }
+    
+    dat_by_group <- dat_by_group[scen_id!="scen_1", ]
+    
+    legend_labels <- setdiff(legend_labels, 
+                             grep(scen_names[1], legend_labels, value=TRUE))
+    ylim_custom <- c(NA, NA)
+    line_colours <- line_colours[-1]
+    ylab_custom <- paste0(ylab_custom, switch(lang,
+                  "eng" = ", scenario minus baseline, population shares",
+                  "swe" = ", scenario minus baslinje, befolkningsandelar"
+      )
+    )
+  }
+  
+  
   ## Create graph as a proportion of baseline, of population shares
   if (measure == "rel_diff_pop_share" & n_scen > 1) {
     
     dat_by_group[variable == var_to_plot, value := value / 
-                   dat_by_group[variable == "total_pop", value]]
+                   dat_by_group[variable == "pop_total", value]]
     
     for (scen in n_scen:2) {
       dat_by_group[scen_id == scen_ids[scen], 
@@ -1133,7 +1284,7 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
     ylab_custom <- paste0(ylab_custom, switch(lang,
                     "eng" = ", scenario to baseline ratio of population shares",
                     "swe" = ", kvot scenario/baslinje, befolkningsandelar"
-    )
+      )
     )
   }
   
@@ -1315,8 +1466,8 @@ ui <- fluidPage(
                                   "swe"= "Simuleringsperiod"),
                                info_icon(
                                  switch(lang, 
-          "eng" = "Choose start year (<= 2022) and end year for new simulation", 
-          "swe"= "Välj startår (<= 2022) och slutår för ny simulering")
+          "eng" = "Choose start year (<= 2024) and end year for new simulation", 
+          "swe"= "Välj startår (<= 2024) och slutår för ny simulering")
                                )),
                             
                             sliderInput(
@@ -1412,33 +1563,41 @@ bsCollapse(id = "risk-factors-baseline",
           "eng" = "Click to expand and use sliders to adjust", 
           "swe"= "Klicka för att expandera och använd reglagen för att justera")
                                )),
+
+
                             
 bsCollapse(id = "advanced-options",
    bsCollapsePanel(switch(lang, 
                           "eng" = "(+) Advanced options", 
                           "swe"= "(+) Avancerade inställningar"),
                    
+                   checkboxInput(inputId = "calibrate_cpaf_cancer",
+                                 label = switch(lang,
+                                  "eng" = span(tags$b("Calibrate risk factor importance to cancer"),
+                                               info_icon("Enable to set the share of cancer accounted for by the risk factors in the model")),
+                                  "swe" = span(tags$b("Kalibrera riskfaktorers betydelse för cancer"),
+                                               info_icon("Slå på för att bestämma andelen av cancer som tillskrivs modellens riskfaktorer")),
+                                 )),
+                   
                    sliderInput(
-                     inputId = "cpaf_cancer",
-                     label = switch(lang,
-                                    "eng" = span("Cancer explained percentage",
-                                                 info_icon("Percentage share of cancer accounted for by the risk factors in the model")),
-                                    "swe" = span("Cancer förklaringsandel",
-                                                 info_icon("Procentandelen av cancer som tillskrivs modellens riskfaktorer")),
-                     ), # end switch
+                     "cpaf_cancer",
+                     label = NULL,
                      min = 0,
                      max = 1.0,
                      value = default_parameters$cpaf_cancer,
                      step = 0.01),
                    
+                   checkboxInput(inputId = "calibrate_cpaf_cvd",
+                                 label = switch(lang,
+                                    "eng" = span(tags$b("Calibrate risk factor importance to cvd"),
+                                                 info_icon("Enable to set the share of cvd accounted for by the risk factors in the model")),
+                                    "swe" = span(tags$b("Kalibrera riskfaktorers betydelse för hjärt-kärlsjukdom"),
+                                                 info_icon("Slå på för att bestämma andelen av hjärt-kärlsjukdom som tillskrivs modellens riskfaktorer")),
+                                 )),
+
                    sliderInput(
                      inputId = "cpaf_cvd",
-                     label = switch(lang,
-                                    "eng" = span("CVD explained percentage",
-                                                 info_icon("Percentage share of CVD accounted for by the risk factors in the model")),
-                                    "swe" = span("Hjärt-kärl förklaringsandel",
-                                                 info_icon("Procentandelen av hjärt-kärlsjukdom som tillskrivs modellens riskfaktorer")),
-                     ), # end switch
+                     label = NULL,
                      min = 0,
                      max = 1.0,
                      value = default_parameters$cpaf_cvd,
@@ -1447,27 +1606,29 @@ bsCollapse(id = "advanced-options",
                    sliderInput(
                      inputId = "age_cutoff_cancer",
                      label = switch(lang,
-                                    "eng" = span("Age threshold cancer risk",
-                                                 info_icon("The minimum age from which cancer is affected by risk factors")),
-                                    "swe" = span("Ålderströskel för cancerrisk",
-                                                 info_icon("Lägsta ålder från vilken cancer påverkas av riskfaktorer")),
+                                    "eng" = span("Age interval for cancer risk",
+                                                 info_icon("Cancer is affected by risk factors within this age interval")),
+                                    "swe" = span("Åldersintervall för cancerrisk",
+                                                 info_icon("Cancer påverkas av riskfaktorer inom detta åldersintervall")),
                      ), # end switch
                      min = 0,
                      max = 100,
-                     value = default_parameters$age_cutoff_cancer,
+                     value = c(default_parameters$age_cutoff_cancer, 
+                               default_parameters$age_cutoff_cancer_high),
                      step = 1),
                    
                    sliderInput(
                      inputId = "age_cutoff_cvd",
                      label = switch(lang,
-                                    "eng" = span("Age threshold CVD risk",
-                                                 info_icon("The minimum age from which CVD is affected by risk factors")),
-                                    "swe" = span("Ålderströskel för hjärt-kärlrisk",
-                                                 info_icon("Lägsta ålder från vilken hjärt-kärlsjukdomar påverkas av riskfaktorer")),
+                                    "eng" = span("Age interval for CVD risk",
+                                                 info_icon("CVD is affected by risk factors within this age interval")),
+                                    "swe" = span("Åldersintervall för hjärt-kärlrisk",
+                                                 info_icon("Hjärt-kärlsjukdom påverkas av riskfaktorer inom detta åldersintervall")),
                      ), # end switch
                      min = 0,
                      max = 100,
-                     value = default_parameters$age_cutoff_cvd,
+                     value = c(default_parameters$age_cutoff_cvd, 
+                               default_parameters$age_cutoff_cvd_high),
                      step = 1)
    ) # end bsCollapsePanel("advanced-options"
 ),
@@ -1541,6 +1702,7 @@ bsCollapse(id = "advanced-options",
                            )
                          ), # end fluidRow
                          plotlyOutput("plot_time_series"),
+                         uiOutput("slider_age_custom_ts_plot"),
                          uiOutput("render_button_save_ts_data")
                 ), # tabPanel(tags$h5("Time series"),
                 tabPanel(tags$h5(switch(lang, 
@@ -1595,6 +1757,7 @@ bsCollapse(id = "advanced-options",
                          ), # end fluidRow
                          plotlyOutput("plot_accumulated"),
                          uiOutput("slider_years_acc_plot"),
+                         uiOutput("slider_age_custom_acc_plot"),
                          uiOutput("render_button_save_acc_data")
                 ), # end tabPanel(tags$h5("Accumulated"),
                 tabPanel(tags$h5(switch(lang, 
@@ -1606,12 +1769,12 @@ bsCollapse(id = "advanced-options",
                 tabPanel(tags$h5(switch(lang, 
                                         "eng" = "About", 
                                         "swe"= "Om modellen")),
-                         lapply(about_text, p),
+                         lapply(about_text, p)#,
                          
-                         img(src = switch(lang,
-                                          "eng" = "model_flowchart_eng.png", 
-                                          "swe" = "model_flowchart_swe.png"),
-                             align = "left", width="75%")
+                         # img(src = switch(lang,
+                         #                  "eng" = "model_flowchart_eng.png", 
+                         #                  "swe" = "model_flowchart_swe.png"),
+                         #     align = "left", width="75%")
                          
                 ) # tabPanel(tags$h5("About"),
               ) # tabsetPanel(
@@ -1645,6 +1808,49 @@ server <- function(input, output, session) {
   
   timer_log <- reactiveTimer(500)
   timer_data <- reactiveTimer(5000)
+  
+  ## Controls for calibration of risk factor explainability wrt cancer and cvd
+
+  session$onFlushed(function() {
+    if (isolate(input$calibrate_cpaf_cancer) == FALSE) {
+      disable("cpaf_cancer")
+    }
+  })
+  
+  session$onFlushed(function() {
+    if (isolate(input$calibrate_cpaf_cvd) == FALSE) {
+      disable("cpaf_cvd")
+    }
+  })
+  
+  observeEvent(input$calibrate_cpaf_cancer, {
+    if (input$calibrate_cpaf_cancer == FALSE) {
+      disable("cpaf_cancer")
+    } else {
+      if (isolate(baseline_controls_active()) == TRUE) {
+        enable("cpaf_cancer")
+      }
+    }
+  })
+    
+  observeEvent(input$calibrate_cpaf_cvd, {
+    if (input$calibrate_cpaf_cvd == FALSE) {
+      disable("cpaf_cvd")
+    } else {
+      if (isolate(baseline_controls_active()) == TRUE) {
+        enable("cpaf_cvd")
+      }
+    }
+  })
+    
+  
+  ## Observer for when custom age interval is manipulated for time series plots,
+  ## switching group to custom age. NOTE: does not work currently as it triggers
+  ## just upon loading the slider the first time
+  
+  # observeEvent(input$slider_age_custom_ts_plot, {
+  #  updateSelectInput(inputId = "ts_group", selected = "age_custom")
+  # })
   
   ## Observer for reading logs for active simulations
   observeEvent(timer_log(), {
@@ -1854,11 +2060,20 @@ server <- function(input, output, session) {
       
       ## Update baseline active status
       baseline_active("yes")
+      
     }
   }) # end observeEvent(input$button_load_scen_1, {
   
   ## Read uploaded baseline parameters and update sliders
   observeEvent(baseline_parameters(), {
+    updateCheckboxInput(
+      inputId = "calibrate_cpaf_cancer",
+      value = baseline_parameters()$calibrate_cpaf_cancer)
+    
+    updateCheckboxInput(
+      inputId = "calibrate_cpaf_cvd",
+      value = baseline_parameters()$calibrate_cpaf_cvd)
+    
     updateSliderInput(
       inputId = "cpaf_cancer",
       value = baseline_parameters()$cpaf_cancer)
@@ -1878,6 +2093,8 @@ server <- function(input, output, session) {
   })
   
   ## Observer toggling baseline controls
+  ## Note that cpaf sliders should only be enabled if their corresponding
+  ## calibration checkbox inputs are checked
   observeEvent(baseline_controls_active(), {
     if (baseline_controls_active() == FALSE) {
       for (i in 1:length(baseline_slider_names)) {
@@ -1885,7 +2102,13 @@ server <- function(input, output, session) {
       }
     } else if (baseline_controls_active() == TRUE) {
       for (i in 1:length(baseline_slider_names)) {
-        enable(baseline_slider_names[i])
+        if (baseline_slider_names[i] == "cpaf_cancer") {
+          if (isolate(input$calibrate_cpaf_cancer)==TRUE) enable(baseline_slider_names[i])
+        } else if (baseline_slider_names[i] == "cpaf_cvd") {
+          if (isolate(input$calibrate_cpaf_cvd)==TRUE) enable(baseline_slider_names[i])
+        }  else {
+          enable(baseline_slider_names[i])
+        }
       }
     }
   })
@@ -1910,10 +2133,14 @@ server <- function(input, output, session) {
       write_json(
         path = path,
         x = list(
+          calibrate_cpaf_cancer = as.integer(input$calibrate_cpaf_cancer),
+          calibrate_cpaf_cvd = as.integer(input$calibrate_cpaf_cvd),
           cpaf_cancer = input$cpaf_cancer,
           cpaf_cvd = input$cpaf_cvd,
-          age_cutoff_cancer = input$age_cutoff_cancer,
-          age_cutoff_cvd = input$age_cutoff_cvd,
+          age_cutoff_cancer = input$age_cutoff_cancer[1],
+          age_cutoff_cvd = input$age_cutoff_cvd[1],
+          age_cutoff_cancer_high = input$age_cutoff_cancer[2],
+          age_cutoff_cvd_high = input$age_cutoff_cvd[2],
           dcost_total_cancer = default_parameters$dcost_total_cancer,
           icost_total_cancer = default_parameters$icost_total_cancer,
           dcost_growth_cancer = default_parameters$dcost_growth_cancer,
@@ -2124,6 +2351,52 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
     
   }) # end renderUI
   
+  ## Slider for changing custom age interval of time series graph
+  output$slider_age_custom_ts_plot <- renderUI({
+    dat_base_1 <- dat_base[["scen_1"]]
+    if (is.null(dat_base_1)) return(NULL)
+    tagList(
+      h5(switch(lang, 
+                "eng" = "Custom age interval (select from 'Group')",
+                "swe" = "Anpassat åldersintervall (välj från 'Grupp')")
+      ),
+      
+      sliderInput("slider_age_custom_ts_plot",
+                  label = NULL,
+                  min = 0,
+                  max = 100,
+                  value = c(min(input$age_cutoff_cancer[1],
+                                input$age_cutoff_cvd[1]), 
+                            max(input$age_cutoff_cancer[2],
+                                input$age_cutoff_cvd[2])),
+                  step = 1,
+                  sep = "")
+    ) # tagList
+  })
+  
+  output$slider_age_custom_acc_plot <- renderUI({
+    dat_base_1 <- dat_base[["scen_1"]]
+    if (is.null(dat_base_1)) return(NULL)
+    tagList(
+      h5(switch(lang, 
+                "eng" = "Custom age interval (select from 'Group')",
+                "swe" = "Anpassat åldersintervall (välj från 'Grupp')")
+      ),
+      
+      sliderInput("slider_age_custom_acc_plot",
+                  label = NULL,
+                  min = 0,
+                  max = 100,
+                  value = c(min(input$age_cutoff_cancer[1],
+                                input$age_cutoff_cvd[1]), 
+                            max(input$age_cutoff_cancer[2],
+                                input$age_cutoff_cvd[2])),
+                  step = 1,
+                  sep = "")
+    ) # tagList
+  })
+  
+  
   ## Slider for changing year of the cross section graph
   output$slider_year_cs_plot <- renderUI({
     dat_base_1 <- dat_base[["scen_1"]]
@@ -2244,6 +2517,7 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
                 group = input$ts_group, 
                 measure = input$ts_measure,
                 years = input$slider_simyears,
+                age_limits_custom = input$slider_age_custom_ts_plot,
                 var_list = var_list,
                 var_labels = var_labels,
                 input = input)
@@ -2284,6 +2558,7 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
                 group = input$acc_group, 
                 measure = input$acc_measure,
                 years = input$slider_years_acc_plot,
+                age_limits_custom = input$slider_age_custom_acc_plot,
                 var_list = var_list,
                 var_labels = var_labels,
                 input = input)

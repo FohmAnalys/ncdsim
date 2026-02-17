@@ -1,8 +1,12 @@
 {
+  "calibrate_cpaf_cancer" : 1,
+  "calibrate_cpaf_cvd" : 1,
   "cpaf_cancer" : 0.18,
   "cpaf_cvd" : 0.39,
-  "age_cutoff_cancer" : 40,
-  "age_cutoff_cvd" : 40,
+  "age_cutoff_cancer" : 39,
+  "age_cutoff_cvd" : 39,
+  "age_cutoff_cancer_high" : 100,
+  "age_cutoff_cvd_high" : 100,
   "dcost_total_cancer": 13990511502,
   "icost_total_cancer": 4795543552,
   "dcost_growth_cancer" : 0.0,
@@ -12,13 +16,13 @@
   "dcost_total_base_year" : 2022,
 
   "rr" : {
-    "rr_cancer_smoking" : 1.37,
+    "rr_cancer_smoking" : 1.34,
     "rr_cancer_inactivity" : 1.09,
-    "rr_cancer_obesity" : 1.056,
+    "rr_cancer_obesity" : 1.04,
     "rr_cancer_alcohol" : 1.042,
-    "rr_cvd_smoking" : 2.15,
+    "rr_cvd_smoking" : 1.85,
     "rr_cvd_inactivity" : 1.25,
-    "rr_cvd_obesity" : 1.374,
+    "rr_cvd_obesity" : 1.27,
     "rr_cvd_alcohol" : 1.046
   },
   

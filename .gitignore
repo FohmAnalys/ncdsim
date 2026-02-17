@@ -8,5 +8,6 @@
 *\ui_status.txt
 *UI/runs/*
 UI/scenarios/*
+Input/bak/*
 !UI/runs/.gitignore
 !UI/scenarios/.gitignore
