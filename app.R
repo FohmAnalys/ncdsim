@@ -1101,17 +1101,9 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                "age_custom" = paste0("Age ", 
                                                      age_limits_custom[1],
                                                      "-",
-<<<<<<< HEAD
-                                                     age_limits_custom[2]),
-                                                     " years."),
-||||||| parent of ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
-                                                     age_limits_custom[2]),
-                                                     "."),
-=======
                                                      age_limits_custom[2],
                                                      " years.")
                                ),
->>>>>>> ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
                         "swe" = 
                           list("total" = "Hela befolkningen.",
                                "sex" = "Per kön.",
@@ -1121,17 +1113,9 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                "age_custom" = paste0("Ålder ", 
                                                      age_limits_custom[1],
                                                      "-",
-<<<<<<< HEAD
-                                                     age_limits_custom[2]),
-                                                     " år.")
-||||||| parent of ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
-                                                     age_limits_custom[2]),
-                                                     ".")
-=======
                                                      age_limits_custom[2],
                                                      " år.")
                                                      )
->>>>>>> ed87546 (Fixat buggar i gui-logiken för kalibreringssliders)
   ) # end switch                     
   
   ylim_custom <- c(0, NA)
