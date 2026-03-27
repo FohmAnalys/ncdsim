@@ -44,7 +44,7 @@ theme_fohm <- function(text_size=11) {
                           plot.title = ggplot2::element_text(size = text_size + 2),
                           plot.subtitle = ggplot2::element_text(vjust=-9, size = text_size + 1),
                           legend.title = ggplot2::element_blank(),
-                          legend.position="top",
+                          legend.position="right",
                           legend.text=ggplot2::element_text(size = text_size - 1),
                           plot.background=ggplot2::element_rect(color="#BFBFBF", size=1),
                           complete = TRUE

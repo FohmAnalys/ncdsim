@@ -2,7 +2,7 @@
 
 "Simuleringarna anpassas och styrs via den vänstra panelen. Du måste alltid börja med att köra eller ladda en baslinjesimulering från den vänstra fliken. Alla alternativa scenarier som genereras under samma användarsession använder kalibreringskonstanterna från den laddade baslinjen. Dessa scenarier är generellt sett inte kompatibla med en annan baslinje. En aktiv baslinje indikeras med en bock i rubriken på Baslinje-fliken."
 
-"Tekniskt sett består en baslinje av en simulerad datafil (i csv-format) och en parameterfil (i json-format). Baslinjesimuleringar sparas automatiskt i en undermapp till /UI/scenarios/. En försimulerad baslinje kan laddas från en mapp som har samma namn som data- och parameterfilerna i mappen."
+"Tekniskt sett består en baslinje av en datafil (i csv-format) och en parameterfil (i json-format). En baslinje kan laddas från din lokala dator genom att ladda en försimulerad datafil och tillhörande parameterfil."
 
 "Alternativa scenarier genereras eller laddas från fliken Scenarier. Dessa scenarier delar samma parametrar som baslinjen, med undantag för justeringsfaktorer för storleken på riskgrupperna, vilka kan varieras för att representera kontrafaktiska utvecklingar (t.ex. på grund av interventioner). Du kan köra flera scenariosimuleringar parallellt."
 
