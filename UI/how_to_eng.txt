@@ -2,7 +2,7 @@
 
 "The simulations are customized and controlled using the left panel. You always need to start by running or loading a baseline simulation, from the left-most tab. Any alternative scenarios generated from the same UI session will use the calibration constants of the currently active baseline scenario. These scenarios will in general not be compatible with a different baseline. An active baseline is indicated by a checkmark in the header of the Baseline tab."
 
-"Technically, a baseline consists of a simulated outdata file (csv-format) and a parameters file (json-format). Baseline simulations are automatically saved in a sub-folder of /UI/scenarios/. A pre-simulated baseline can be loaded from a folder sharing the same name as the data and parameters files within."
+"Technically, a baseline consists of an outdata file (csv-format) and a parameters file (json-format). A baseline can be loaded from your local computer by loading a pre-simulated data file and the parameter file that was used for the same simulation."
 
 "Alternative scenarios are generated or loaded from the Scenarios tab. These scenarios share the same parameters as the baseline, except for adjustment factors of the sizes the risk groups, which can be varied to represent counterfactual developments (e.g. due to interventions). You can run several scenario simulations in parallel."
 

@@ -157,11 +157,11 @@ info_text_inactivity <- switch(lang,
                     "eng" = "< 150 minutes moderate physical activity per week",
                     "swe" = "< 150 minuter måttlig fysisk aktivitet per vecka")
 
-label_slider_obesity <- switch(lang, "eng" = "Obesity", "swe" = "Obesitas")
+label_slider_obesity <- switch(lang, "eng" = "Overweight", "swe" = "Övervikt")
 
 info_text_obesity <- switch(lang, 
-                            "eng" = "BMI > 30",
-                            "swe" = "BMI > 30")
+                            "eng" = "BMI > 25",
+                            "swe" = "BMI > 25")
 
 label_slider_fruit <- switch(lang, "eng" = "Fruit", "swe" = "Frukt")
 info_text_fruit <- switch(lang, 
@@ -302,36 +302,12 @@ acc_measure_list <- switch(lang,
 default_parameters_path <- paste0(PROJECTROOT, "/Input/defaults/baseline.json")
 default_parameters <- read_json(default_parameters_path)
 
-# browser()
-
 ## Min and max years for simulation
 start_year_min <- 2020
 end_year_max <- 2100
 
 ## Max number of scenarios (including baseline)
 n_scen_max <- 8
-
-## Create scenarios folder if not existing already
-if (file.exists("UI/scenarios") == FALSE) dir.create("UI/scenarios")
-
-## Create folders for all simulation runs
-for (scen in 1:n_scen_max) {
-  tmp_path <- paste0(PROJECTROOT, "/UI/runs/scen_", scen)
-  if (file.exists(tmp_path) == FALSE) {
-    dir.create(tmp_path)
-  }
-  if (file.exists(paste0(tmp_path, "/data")) == FALSE) {
-    dir.create(paste0(tmp_path, "/data"))
-  }
-}
-
-## Reset log files
-for (scen in 1:n_scen_max) {
-  cat(switch(lang,
-             "eng" = "Waiting to start or load", 
-             "swe" = "Väntar på att starta eller ladda"),
-      file = paste0(PROJECTROOT, "/UI/runs/scen_", scen, "/log.txt"))
-}
 
 slider_width <- "100%"
 
@@ -501,7 +477,7 @@ var_list  <- switch(lang,
                         "Indirect costs" = "icost_ncd_msek"),
                         "Non-diet risk factors" = c(
                           "Alcohol" = "s_alcohol",
-                          "Obesity" = "s_obesity",
+                          "Overweight" = "s_obesity",
                           "Smoking" = "s_smoking",
                           "Insufficient physical inactivity" = "s_inactivity"),
                         "Dietary risk factors" = c(
@@ -540,7 +516,7 @@ var_list  <- switch(lang,
                         "Indirekta kostnader" = "icost_ncd_msek"),
                         "Riskfaktorer, icke-kost" = c(
                           "Alkohol" = "s_alcohol",
-                          "Obesitas" = "s_obesity",
+                          "Övervikt" = "s_obesity",
                           "Rökning" = "s_smoking",
                           "Otillräcklig fysisk aktivitet" = "s_inactivity"),
                         "Riskfaktorer, kost" = c(
@@ -663,7 +639,7 @@ about_text <- scan(switch(lang,
 ## Function for running simulations in a separate R session. It's used both for
 ## baseline simulations (scen == 1) and scenarios
 run_scen <- function(scen, input, sim_status, baseline_active, 
-                     root=PROJECTROOT) {  
+                     root=PROJECTROOT, session_id) {  
   
   ## Require that a baseline is loaded if scenario run
   if (scen!=1 & baseline_active()!="yes") {
@@ -708,9 +684,11 @@ run_scen <- function(scen, input, sim_status, baseline_active,
   }
   
   ## Extract paths
+  session_path <- paste0(root, "/UI/", session_id, "/")
   scen_name <- paste0("scen_", scen)
-  scen_path <-  paste0(root, "/UI/runs/", scen_name, "/")
-  baseline_path <- paste0(root, "/UI/scenarios/", input$scen_1_name, "/")
+  scen_path <-  paste0(session_path, "runs/", scen_name, "/")
+  data_path <-  paste0(scen_path, "data/")
+  baseline_path <- paste0(session_path, "scenarios/", input$scen_1_name, "/")
   
   ## Separate controls if baseline simulation, when scen == 1
   
@@ -727,10 +705,10 @@ run_scen <- function(scen, input, sim_status, baseline_active,
       return(NULL)
     }
     
-    dir.create(baseline_path)
-    
     baseline_active("running")
     
+    dir.create(baseline_path, recursive = TRUE)
+
     ## Write a json file with the selected parameters
     ## Note: make scenario names flexible later
     write_json(
@@ -780,6 +758,7 @@ run_scen <- function(scen, input, sim_status, baseline_active,
       ui = TRUE,
       ui_lang = lang,
       scen_name = scen_name,
+      scen_path = scen_path,
       cfact = c(
         cfact_smoking = input[[paste0("cfact_smoking_", scen)]],
         cfact_alcohol = input[[paste0("cfact_alcohol_", scen)]],
@@ -801,28 +780,37 @@ run_scen <- function(scen, input, sim_status, baseline_active,
 } # end run_scen()
 
 ## Function for clearing a scenario
-clear_scen <- function(scen, sim_status, dat_base, baseline_active, 
-                       root=PROJECTROOT) {
+clear_scen <- function(scen, input, sim_status, dat_base, baseline_active, 
+                       root=PROJECTROOT, session_id) {
   showNotification(paste0(switch(lang,
                                  "eng" = "Stopping/clearing scenario ", 
-                                 "swe" = "Stoppar/rensar scenario "
-  ),  
-  scen, "..."), duration=3)
-  scen_path <-  paste0(root, "/UI/runs/scen_", scen, "/")
+                                 "swe" = "Stoppar/rensar scenario "),  
+    scen, "..."), duration=3)
+  session_path <- paste0(root, "/UI/", session_id, "/")
+  scen_path <-  paste0(session_path, "runs/scen_", scen, "/")
   cat("stop", file = paste0(scen_path, "ui_status.txt"))
   sim_status(replace(sim_status(), scen, "stop"))
   ## Remove any .rda files from simulations, ignore warning if there was no file
   system(paste0("rm ", scen_path, "data/*.rda"), ignore.stderr = TRUE)
   dat_base[[paste0("scen_", scen)]] <- NULL
   
-  ## Reset baseline controls and clear all scenarios if baseline is cleared
+  ## Remove baseline data, reset baseline controls and clear all scenarios if 
+  ## baseline is cleared
   if (scen == 1) {
+    if (file.exists(paste0(session_path, "scenarios/", input$scen_1_name))) {
+      system(paste0("rm -r ", session_path, "scenarios/", input$scen_1_name, "/"))
+    }
+    
     reset("scen_1_name")
+    reset("button_load_baseline_data")
+    reset("button_load_baseline_parameters")
+    disable("button_apply_loaded_baseline")
     for (i in 1:length(baseline_slider_names)) {
       reset(baseline_slider_names[i])
     }
     sapply(2:n_scen_max, clear_scen, sim_status = sim_status, 
-           dat_base = dat_base, baseline_active = baseline_active, root = root)
+           dat_base = dat_base, baseline_active = baseline_active, root = root,
+           session_id = session_id)
     baseline_active("no")
   } else if (scen %in% 2:n_scen_max) {
     reset(paste0("scen_", scen, "_name"))
@@ -897,10 +885,12 @@ load_scen <- function(scen, input, sim_status, dat_base) {
 } # end load_scen
 
 ## Function for scanning a simulation log file, returning its contents
-scan_log <- function(scen, root = PROJECTROOT) {
-  paste(scan(file =
-               paste0(root, "/UI/runs/scen_", scen, "/log.txt"),
-             what="character", sep="\n", quiet = TRUE), collapse="\n")
+scan_log <- function(scen, root = PROJECTROOT, session_id) {
+  log_path <- paste0(root, "/UI/", session_id, "/runs/scen_", scen, "/log.txt")
+  if (file.exists(log_path)) {
+    paste(scan(file = log_path,
+               what="character", sep="\n", quiet = TRUE), collapse="\n")
+  }
 }
 
 ## Function for creating plots by aggregating and modifying the raw
@@ -1421,18 +1411,36 @@ ui <- fluidPage(
                             
   ## File input for loading pre-simulated baseline data
   h5(switch(lang, 
-            "eng" = "Load baseline from folder", 
-            "swe"= "Ladda baslinje från mapp"),
-     info_icon("Load pre-simulated baseline data and parameters from folder")),
+            "eng" = "Load baseline from file", 
+            "swe" = "Ladda baslinje från fil"),
+     info_icon(switch(lang, 
+                      "eng" = "Load pre-simulated baseline data (.csv) and matching parameters (.json)",
+                      "swe" = "Ladda data (.csv) och matchande parametrar (.json) för en försimulad baslinje"))
+     ),
   
-  shinyDirButton("button_load_scen_1", 
-                 switch(lang, 
-                    "eng" = "Select a folder", 
-                    "swe"= "Välj mapp"), 
-                 switch(lang, 
-                    "eng" = "Please select a folder", 
-                    "swe"= "Välj mapp"), 
-                 FALSE),
+  wellPanel(style = "padding: 5px; margin-bottom: 20px",
+  div(style = "margin-bottom: 0px", fileInput("button_load_baseline_data", 
+            label=NULL, accept=".csv", placeholder = switch(lang,
+                                                "eng" = "Data file (.csv)",
+                                                "swe" = "Datafil (.csv)"))),
+
+  div(style = "margin-bottom: -15px; margin-top: -20px",
+          fileInput("button_load_baseline_parameters", 
+            label=NULL, accept=".json", placeholder = switch(lang,
+                                              "eng" = "Parameter file (.json)",
+                                              "swe" = "Parameterfil (.json)"))),
+  
+  actionButton("button_clear_loaded_baseline", 
+                        label=switch(lang,
+                                     "eng" = "Clear",
+                                     "swe" = "Rensa")),
+  disabled(actionButton("button_apply_loaded_baseline", 
+               label=switch(lang,
+                                 "eng" = "Apply baseline",
+                                 "swe" = "Tillämpa baslinje")))
+  ),
+  
+################################################################################
   
   h5(switch(lang, 
             "eng" = "Baseline name", 
@@ -1771,6 +1779,41 @@ bsCollapse(id = "advanced-options",
 ################################################################################
 server <- function(input, output, session) {
   
+  ## Unique session ID, used for session-specific files
+  session_id <- session$token
+  
+  ## Create temporary directories for simulation for session
+  session$onFlushed(function() {
+    session_path <- paste0(PROJECTROOT,"/UI/", session_id, "/")
+    for (scen in 1:n_scen_max) {
+      data_path <- paste0(session_path, "runs/scen_", scen, "/data/")
+      dir.create(data_path, recursive = TRUE, showWarnings = FALSE)
+      ## Create log file
+        cat(switch(lang,
+                   "eng" = "Waiting to start or load", 
+                   "swe" = "Väntar på att starta eller ladda"),
+            file = paste0(session_path, "runs/scen_", scen, "/log.txt"))
+      }
+    ## Create scenarios folder (only used for baseline csv and json right now)
+    dir.create(paste0(session_path, "scenarios/"), showWarnings = FALSE)
+  })
+  
+  ## Remove temporary directories and files when session ends
+  session$onSessionEnded(function() {
+    session_path <- paste0(PROJECTROOT,"/UI/", session_id, "/")
+    
+    ## Stop ongoing simulations
+    for (scen in 1:n_scen_max) {
+      scen_path <-  paste0(session_path, "runs/scen_", scen, "/")
+      cat("stop", file = paste0(scen_path, "ui_status.txt"))
+    }
+    Sys.sleep(3)
+    ## Clean up directories and files
+    if (dir.exists(session_path)) {
+      unlink(session_path, recursive = TRUE, force = TRUE)
+      }
+  })
+  
   ## Increase max limit for loading files
   options(shiny.maxRequestSize=32*1024^2)
   
@@ -1789,6 +1832,10 @@ server <- function(input, output, session) {
   baseline_parameters <- reactiveVal(read_json(default_parameters_path))
   
   baseline_controls_active <- reactiveVal(TRUE)
+  
+  baseline_data_tmp <- reactiveVal(NULL)
+  baseline_name_tmp <- reactiveVal(NULL)
+  baseline_parameters_tmp <- reactiveVal(NULL)
   
   timer_log <- reactiveTimer(500)
   timer_data <- reactiveTimer(5000)
@@ -1842,7 +1889,7 @@ server <- function(input, output, session) {
       outputId <- paste0("log_text_", scen)
       
       if (sim_status()[[scen]] == "run") {
-        log_text <- scan_log(scen)
+        log_text <- scan_log(scen, session_id = session_id)
         output[[outputId]] <- renderText(log_text)
       } else if (sim_status()[[scen]] == "stop") {
         log_text <- switch(lang,
@@ -1866,7 +1913,7 @@ server <- function(input, output, session) {
     lapply(1:n_scen_max, function(scen) {
       if (sim_status()[[scen]] == "run") {
         
-      data_path <- paste0("UI/runs/scen_", scen, "/data/")
+      data_path <- paste0("UI/", session_id, "/runs/scen_", scen, "/data/")
       ## Extract path to the .rda file. Normally there is only one file, but if
       ## the simulation script fails to remove the previous one, this will be a
       ## vector and so we should account for that
@@ -1918,7 +1965,6 @@ server <- function(input, output, session) {
     if (baseline_active() == "yes") {
       baseline_controls_active(FALSE)
       disable("button_run_scen_1")
-      disable("button_load_scen_1")
       disable("scen_1_name")
       sim_status(replace(sim_status(), 1, "active"))
       enable("button_save_baseline_data")
@@ -1926,14 +1972,12 @@ server <- function(input, output, session) {
     
     if (baseline_active() == "running") {
       baseline_controls_active(FALSE)
-      disable("button_load_scen_1")
       disable("scen_1_name")
     }
     
     if (baseline_active() == "no") {
       baseline_controls_active(TRUE)
       disable("button_save_baseline_data")
-      enable("button_load_scen_1")
       enable("scen_1_name")
       enable("button_run_scen_1")
     }
@@ -1955,98 +1999,156 @@ server <- function(input, output, session) {
     } # end for
   })
   
-  ## Setup for baseline folder selection
-  volumes <- getVolumes()
-  roots <- c(wd="UI/scenarios")
-  shinyDirChoose(input, "button_load_scen_1", roots=roots, session=session,
-                 allowDirCreate = FALSE)
+  ## Observer for loading baseline data
   
-  observeEvent(input$button_load_scen_1, {
+  observeEvent(input$button_load_baseline_data, {
     
-    baseline_path <- parseDirPath(roots, input$button_load_scen_1)
-    
-    if (length(baseline_path) > 0) {
-      
-      tmp <- strsplit(baseline_path, "/")[[1]]
-      
-      baseline_name <- tmp[length(tmp)]
-      
-      ## Sanity checks
-      baseline_data_path <- paste0(baseline_path, "/", baseline_name, ".csv")
-      baseline_parameters_path <- paste0(baseline_path, "/", baseline_name, 
-                                         ".json")
-      
-      if ((file.exists(baseline_data_path) & 
-           file.exists(baseline_parameters_path)) == FALSE) {
-        showNotification(switch(lang,
-            "eng" = "Data or parameter file with name matching folder missing",
-            "swe" = "Data eller parameterfil med namn som matchar mapp saknas"
-)
-        )
-        return(NULL)
-      }
-      
-      ## Read baseline data file
-      dat <- tryCatch(fread(file = baseline_data_path, sep=";", header=TRUE),
-              error = function(e) {
-                showNotification(paste0(switch(lang,
+    ## Try reading baseline data file
+    baseline_data_tmp_catch <- tryCatch(
+      fread(input$button_load_baseline_data$datapath, sep = ";", header=TRUE),
+      error = function(e) {
+        showNotification(paste0(switch(lang,
                        "eng" = "Problem reading data, error message: ",
                        "swe" = "Problem med att läsa in data, felmeddelande: "
-                ), e$message)) }
-      ) # end tryCatch
-      
-      if (is.null(dat)) return(NULL)
-      
-      if (all(colnames(dat) == all_var_names) == FALSE) {
-        showNotification(switch(lang,
-              "eng" = "Variable names of data not matching NCD-SIM output data",
-              "swe" = "Variabelnamn i data matchar inte utdata fråb NCD-SIM"
-        )
-        )
-        return(NULL)
-      }
-      
-      ## Read parameter file from same directory
-      baseline_par_tmp <- 
-        tryCatch(read_json(baseline_parameters_path),
-                 error = function(e) {
-                   showNotification(paste0(switch(lang,
-                    "eng" = "Problem reading parameters, error message: ",
-                    "swe" = "Fel vid inläsning av parametrar, felmeddelande: "
-                   ), e$message)) }
-        ) # end tryCatch
-      
-      if (is.null(baseline_par_tmp)) return(NULL)
-      
-      if (all(names(baseline_par_tmp) == all_par_names) == FALSE) {
-        showNotification(switch(lang,
-            "eng" = "Parameter file includes erroneous parameter names",
-            "swe" = "Parameterfilen innehåller felaktiga parameternamn"
-        )  
-        )
-        return(NULL)
-      }
-      
-      baseline_parameters(baseline_par_tmp)
-      
+        ),
+        e$message)) }
+    ) # end tryCatch
+    
+    ## Validate baseline data
+    showNotification(switch(lang,
+                "eng" = "Validating data...",
+                "swe" = "Validerar data...")
+    )
+    
+    if (is.null(baseline_data_tmp_catch)) return(NULL)
+
+    if (all(colnames(baseline_data_tmp_catch) == all_var_names) == FALSE) {
+      showNotification(switch(lang,
+            "eng" = "Erroneous names or order of variables in data ",
+            "swe" = "Felaktiga namn eller fel ordning på variabler i data")
+      )
+      return(NULL)
+    }
+    
+    showNotification(switch(lang,
+                            "eng" = "Data OK",
+                            "swe" = "Data OK")
+    )
+    
+    ## Store data as reactive value
+    baseline_data_tmp(baseline_data_tmp_catch)
+    
+    ## Extract name and store in reactive value
+    baseline_name_tmp(unlist(
+      strsplit(input$button_load_baseline_data$name, ".csv", fixed=TRUE)))
+   })
+  
+  ## Observer for loading baseline parameters
+  
+  observeEvent(input$button_load_baseline_parameters, {
+    
+    ## Try reading parameter file
+    baseline_parameters_tmp_catch <- tryCatch(
+      read_json(input$button_load_baseline_parameters$datapath),
+      error = function(e) {
+        showNotification(paste0(switch(lang,
+                 "eng" = "Problem reading parameter file, error message: ",
+                 "swe" = "Fel vid inläsning av parameterfil, felmeddelande: "
+        ),
+        e$message)) }
+    ) # end tryCatch
+    
+    ## Validate parameters
+    
+    showNotification(switch(lang,
+                            "eng" = "Validating parameters...",
+                            "swe" = "Validerar parametrar...")
+    )
+    
+    if (is.null(baseline_parameters_tmp_catch)) return(NULL)
+
+    if (all(names(baseline_parameters_tmp_catch) == all_par_names) == FALSE) {
+      showNotification(switch(lang,
+          "eng" = "Parameter file includes erroneous parameter names",
+          "swe" = "Parameterfilen innehåller felaktiga parameternamn")
+      )
+      return(NULL)
+    }
+    
+    showNotification(switch(lang,
+                            "eng" = "Parameters OK",
+                            "swe" = "Parametrar OK")
+    )
+    
+    ## Store data as reactive value
+    baseline_parameters_tmp(baseline_parameters_tmp_catch)
+    
+  })
+  
+  observeEvent(input$button_clear_loaded_baseline, {
+    reset("button_load_baseline_data")
+    reset("button_load_baseline_parameters")
+    disable("button_apply_loaded_baseline")
+    baseline_data_tmp(NULL)
+    baseline_name_tmp(NULL)
+    baseline_parameters_tmp(NULL)
+  })
+  
+  ## Observer for baseline_data_tmp and baseline_parameters_tmp, enabling
+  ## applying loaded baseline when both objects are OK
+  
+  observeEvent(list(baseline_data_tmp(), baseline_parameters_tmp()), {
+    ## If both objects non-null, enable the apply loaded baseline button
+    if (!is.null(baseline_data_tmp()) & !is.null(baseline_parameters_tmp())){
+      enable("button_apply_loaded_baseline")
+    } else {
+      disable("button_apply_loaded_baseline")
+      return(NULL)
+    }
+  })
+  
+  observeEvent(input$button_apply_loaded_baseline, {
+    
+    showNotification(switch(lang,
+        "eng" = "Loading baseline...",
+        "swe" = "Laddar baslinje")
+      )
+    
+      dat <- baseline_data_tmp()
+    
+      ## Save baseline in the temporary directory name
+      baseline_path_session <- paste0(PROJECTROOT, "/UI/", session_id,
+                                      "/scenarios/", baseline_name_tmp(), "/")
+      dir.create(baseline_path_session, showWarnings = FALSE)
+      fwrite(dat, file=paste0(baseline_path_session, baseline_name_tmp(), ".csv"),
+             sep=";")
+      write_json(baseline_parameters_tmp(),
+        path=paste0(baseline_path_session, baseline_name_tmp(), ".json"))
+    
+      ## Update baseline_parameters reactive value
+      baseline_parameters(baseline_parameters_tmp())
+
       ## Update baseline name
-      updateTextInput(inputId = "scen_1_name", value = baseline_name)
-      
+      updateTextInput(inputId = "scen_1_name", value = baseline_name_tmp())
+
       ## Create scenario id variable
       dat[, scen_id := "scen_1"]
-      
+
       ## Update reactive value data
       dat_base[["scen_1"]] <- dat
-      
+
       ## Update simulation year slider
       updateSliderInput(inputId = "slider_simyears",
                         value = c(dat[, min(year)], dat[, max(year)]))
-      
+
       ## Update baseline active status
       baseline_active("yes")
       
-    }
-  }) # end observeEvent(input$button_load_scen_1, {
+      ## Clear temporary baseline reactives
+      baseline_name_tmp(NULL)
+      baseline_data_tmp(NULL)
+      baseline_parameters_tmp(NULL)
+  })
   
   ## Read uploaded baseline parameters and update sliders
   observeEvent(baseline_parameters(), {
@@ -2081,10 +2183,17 @@ server <- function(input, output, session) {
   ## calibration checkbox inputs are checked
   observeEvent(baseline_controls_active(), {
     if (baseline_controls_active() == FALSE) {
+      disable("button_load_baseline_data")
+      disable("button_load_baseline_parameters")
+      disable("button_apply_loaded_baseline")
+      disable("button_clear_loaded_baseline")
       for (i in 1:length(baseline_slider_names)) {
         disable(baseline_slider_names[i])
       }
     } else if (baseline_controls_active() == TRUE) {
+      enable("button_clear_loaded_baseline")
+      enable("button_load_baseline_data")
+      enable("button_load_baseline_parameters")
       for (i in 1:length(baseline_slider_names)) {
         if (baseline_slider_names[i] == "cpaf_cancer") {
           if (isolate(input$calibrate_cpaf_cancer)==TRUE) enable(baseline_slider_names[i])
@@ -2455,14 +2564,16 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
   lapply(1:n_scen_max, function(scen) {
     observeEvent(input[[paste0("button_run_scen_", scen)]], {
       run_scen(scen, input = input, sim_status = sim_status, 
-               baseline_active = baseline_active)
+               baseline_active = baseline_active,
+               session_id = session_id)
     })
   })
   
   lapply(1:n_scen_max, function(scen) {
     observeEvent(input[[paste0("button_clear_scen_", scen)]], {
-      clear_scen(scen, sim_status = sim_status, dat_base = dat_base, 
-                 baseline_active = baseline_active)
+      clear_scen(scen, input=input, sim_status = sim_status, dat_base = dat_base, 
+                 baseline_active = baseline_active, 
+                 session_id = session_id)
     })
   })
   
@@ -2473,15 +2584,15 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
   })
   
   ## Stop all runs and delete data on exit
-  onStop(function() {
-    for (scen in 1:n_scen_max) {
-      scen_path <-  paste0(PROJECTROOT, "/UI/runs/scen_", scen, "/")
-      cat("stop", file = paste0(scen_path, "ui_status.txt"))
-      if (length(grep(".rda", dir(paste0(scen_path, "data"))))>0) {
-        system(paste0("rm ", scen_path, "data/*.rda"))
-      } # end if
-    } # end for
-  })
+  # onStop(function() {
+  #   for (scen in 1:n_scen_max) {
+  #     scen_path <-  paste0(PROJECTROOT, "/UI/runs/scen_", scen, "/")
+  #     cat("stop", file = paste0(scen_path, "ui_status.txt"))
+  #     if (length(grep(".rda", dir(paste0(scen_path, "data"))))>0) {
+  #       system(paste0("rm ", scen_path, "data/*.rda"))
+  #     } # end if
+  #   } # end for
+  # })
   
   ##############################################################################
   ## Plots

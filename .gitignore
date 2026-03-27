@@ -9,5 +9,6 @@
 *UI/runs/*
 UI/scenarios/*
 Input/bak/*
+scenarios*
 !UI/runs/.gitignore
 !UI/scenarios/.gitignore

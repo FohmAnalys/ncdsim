@@ -179,6 +179,9 @@ simulate_model <- function(
   ## Use when UI = TRUE to keep track of out data for each scenario run
   scen_name = NULL,
   
+  ## Use when UI = TRUE for session specific path for scenario files
+  scen_path = NULL,
+  
   # Number of (equidistant) steps within each year for ode()
   nsteps = 20,
   
@@ -221,7 +224,6 @@ simulate_model <- function(
   
   ## Write to log when running from Shiny
   if (ui == TRUE) {
-    scen_path <- paste0(PROJECTROOT, "/UI/runs/", scen_name, "/")
     cat(
       switch(ui_lang,
              "eng" = paste0("Starting simulation ", scen_name,
@@ -755,7 +757,7 @@ simulate_model <- function(
       for (age_ in unique(dat$age)) {
         
         ## Check whether to stop simulation when running from Shiny
-        if (ui ==TRUE) {
+        if (ui == TRUE) {
           ui_status <- scan(paste0(scen_path, "ui_status.txt"), what="character")
           if (ui_status == "stop") {
             cat("Simulation stopped\n", file=paste0(scen_path, "log.txt"),
