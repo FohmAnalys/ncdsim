@@ -615,9 +615,9 @@ validate_ncdsim <- function(
   ##********************************************
   
   tmp <- simdat[, .(year, sex, age, paf_cvd_smoking, paf_cvd_inactivity,
-                    paf_cvd_obesity, paf_cvd_alcohol, 
+                    paf_cvd_bmi, paf_cvd_alcohol, 
                     paf_cancer_smoking, paf_cancer_inactivity, 
-                    paf_cancer_obesity, paf_cancer_alcohol, cpaf_diet_cancer,
+                    paf_cancer_bmi, paf_cancer_alcohol, cpaf_diet_cancer,
                     cpaf_diet_cvd)]
   pdat <- melt(tmp, id.vars = c("year", "sex", "age"))
   pdat[, grp := fifelse(length(grep("cancer", variable)) > 0, "cancer", "CVD"),

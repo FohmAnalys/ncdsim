@@ -157,9 +157,9 @@ info_text_inactivity <- switch(lang,
                     "eng" = "< 150 minutes moderate physical activity per week",
                     "swe" = "< 150 minuter måttlig fysisk aktivitet per vecka")
 
-label_slider_obesity <- switch(lang, "eng" = "Overweight", "swe" = "Övervikt")
+label_slider_bmi <- switch(lang, "eng" = "Overweight", "swe" = "Övervikt")
 
-info_text_obesity <- switch(lang, 
+info_text_bmi <- switch(lang, 
                             "eng" = "BMI > 25",
                             "swe" = "BMI > 25")
 
@@ -196,7 +196,7 @@ baseline_slider_names <-
     "cfact_smoking_1",
     "cfact_alcohol_1",
     "cfact_inactivity_1",
-    "cfact_obesity_1",
+    "cfact_bmi_1",
     "cfact_fruit_1",
     "cfact_wholegrains_1",
     "cfact_greens_1",
@@ -214,7 +214,7 @@ scenario_slider_names <-
     "cfact_smoking_",
     "cfact_alcohol_",
     "cfact_inactivity_",
-    "cfact_obesity_",
+    "cfact_bmi_",
     "cfact_fruit_",
     "cfact_wholegrains_",
     "cfact_greens_",
@@ -397,18 +397,18 @@ all_var_names <- c(
   "dr_cvd",
   "dr_comorb",
   "prev_alcohol",
-  "prev_obesity",
+  "prev_bmi",
   "prev_smoking",
   "prev_inactivity",
   "paf_cvd_smoking",
   "paf_cvd_inactivity",
-  "paf_cvd_obesity",
+  "paf_cvd_bmi",
   "paf_cvd_alcohol",
   "cpaf_diet_cvd",
   "p_pop_cvd",
   "paf_cancer_smoking",
   "paf_cancer_inactivity",
-  "paf_cancer_obesity",
+  "paf_cancer_bmi",
   "paf_cancer_alcohol",
   "cpaf_diet_cancer",
   "p_pop_cancer",
@@ -477,7 +477,7 @@ var_list  <- switch(lang,
                         "Indirect costs" = "icost_ncd_msek"),
                         "Non-diet risk factors" = c(
                           "Alcohol" = "s_alcohol",
-                          "Overweight" = "s_obesity",
+                          "Overweight" = "s_bmi",
                           "Smoking" = "s_smoking",
                           "Insufficient physical inactivity" = "s_inactivity"),
                         "Dietary risk factors" = c(
@@ -516,7 +516,7 @@ var_list  <- switch(lang,
                         "Indirekta kostnader" = "icost_ncd_msek"),
                         "Riskfaktorer, icke-kost" = c(
                           "Alkohol" = "s_alcohol",
-                          "Övervikt" = "s_obesity",
+                          "Övervikt" = "s_bmi",
                           "Rökning" = "s_smoking",
                           "Otillräcklig fysisk aktivitet" = "s_inactivity"),
                         "Riskfaktorer, kost" = c(
@@ -558,7 +558,7 @@ var_labels  <- switch(lang,
                           "dcost_ncd_msek" = "Costs (million SEK)",
                           "icost_ncd_msek" = "Costs (million SEK)",
                           "s_alcohol" = "Persons in risk group",
-                          "s_obesity" = "Persons in risk group",
+                          "s_bmi" = "Persons in risk group",
                           "s_smoking" = "Persons in risk group",
                           "s_inactivity" = "Persons in risk group",
                           "s_fruit" = "Persons in risk group",
@@ -591,7 +591,7 @@ var_labels  <- switch(lang,
                           "dcost_ncd_msek" = "Kostnader (MSEK)",
                           "icost_ncd_msek" = "Kostnader (MSEK)",
                           "s_alcohol" = "Personer i riskgrupp",
-                          "s_obesity" = "Personer i riskgrupp",
+                          "s_bmi" = "Personer i riskgrupp",
                           "s_smoking" = "Personer i riskgrupp",
                           "s_inactivity" = "Personer i riskgrupp",
                           "s_fruit" = "Personer i riskgrupp",
@@ -763,7 +763,7 @@ run_scen <- function(scen, input, sim_status, baseline_active,
         cfact_smoking = input[[paste0("cfact_smoking_", scen)]],
         cfact_alcohol = input[[paste0("cfact_alcohol_", scen)]],
         cfact_inactivity = input[[paste0("cfact_inactivity_", scen)]],
-        cfact_obesity = input[[paste0("cfact_obesity_", scen)]]
+        cfact_bmi = input[[paste0("cfact_bmi_", scen)]]
       ),
       cfact_food = c(
         fruit = input[[paste0("cfact_fruit_", scen)]],
@@ -955,7 +955,7 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   dat_wide[, pop_total := s_pop + ongoing_cases_ncd]
   
   dat_wide[, s_alcohol := prev_alcohol * pop_total]
-  dat_wide[, s_obesity := prev_obesity * pop_total]
+  dat_wide[, s_bmi := prev_bmi * pop_total]
   dat_wide[, s_smoking := prev_smoking * pop_total]
   dat_wide[, s_inactivity := prev_inactivity * pop_total]
   
@@ -1496,9 +1496,9 @@ bsCollapse(id = "risk-factors-baseline",
                                               label = label_slider_inactivity, 
                                               info_text = info_text_inactivity 
                            ),
-                           risk_factor_slider("cfact_obesity_1",
-                                              label = label_slider_obesity,
-                                              info_text = info_text_obesity
+                           risk_factor_slider("cfact_bmi_1",
+                                              label = label_slider_bmi,
+                                              info_text = info_text_bmi
                            )
            ), # end bsCollapsePanel("Non-dietary"
            bsCollapsePanel(switch(lang, 
@@ -2355,9 +2355,9 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
                                             info_text = info_text_inactivity 
                                           ),
                                           risk_factor_slider(
-                                            paste0("cfact_obesity_", scen),
-                                            label = label_slider_obesity,
-                                            info_text = info_text_obesity
+                                            paste0("cfact_bmi_", scen),
+                                            label = label_slider_bmi,
+                                            info_text = info_text_bmi
                                           )
                           ), # end bsCollapsePanel("Non-dietary"
                           bsCollapsePanel(switch(lang, 

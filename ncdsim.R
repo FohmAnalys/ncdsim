@@ -93,7 +93,7 @@ read_data_parameters <- function(filepath = "") {
   par_prev_inactivity <- get_prevalence("prev_inactivity.csv")
   
   ## Risk factor prevalence: BMI
-  par_prev_obesity  <- get_prevalence("prev_obesity.csv")
+  par_prev_bmi  <- get_prevalence("prev_bmi.csv")
   
   # Population counts (2000 - 2120), observed & predicted
   dat_popcounts <- fread(file = paste0(filepath, "pop_counts_scb.csv"), 
@@ -132,7 +132,7 @@ read_data_parameters <- function(filepath = "") {
               prev_smoking = par_prev_smoking, 
               prev_alcohol = par_prev_alcohol, 
               prev_inactivity = par_prev_inactivity, 
-              prev_obesity = par_prev_obesity, 
+              prev_bmi = par_prev_bmi, 
               popcounts = dat_popcounts,
               prevalence_cancer = par_prevalence_cancer,
               prevalence_cvd = par_prevalence_cvd,
@@ -202,7 +202,7 @@ simulate_model <- function(
   cfact = c(cfact_smoking = 1.0,
             cfact_alcohol = 1.0,
             cfact_inactivity = 1.0,
-            cfact_obesity = 1.0),
+            cfact_bmi = 1.0),
   
   cfact_food = c(fruit = 1.0,
                  wholegrains = 1.0,
@@ -533,12 +533,12 @@ simulate_model <- function(
       # Getting sick. Use cPAF functions
       paf_cancer_smoking <- paf(prev_smoking, rr_cancer_smoking)
       paf_cancer_inactivity <- paf(prev_inactivity, rr_cancer_inactivity)
-      paf_cancer_obesity <- paf(prev_obesity, rr_cancer_obesity)
+      paf_cancer_bmi <- paf(prev_bmi, rr_cancer_bmi)
       paf_cancer_alcohol <- paf(prev_alcohol, rr_cancer_alcohol)
       
       p_pop_cancer_0_nm <- 1 - (1 - comm_smoking * paf_cancer_smoking) *
         (1 - comm_inactivity * paf_cancer_inactivity) *
-        (1 - comm_obesity * paf_cancer_obesity) *
+        (1 - comm_bmi * paf_cancer_bmi) *
         (1 - comm_alcohol * paf_cancer_alcohol)
       
       p_pop_cancer_0 <- (1 - (1 - cpaf_diet_cancer) * (1 - p_pop_cancer_0_nm))
@@ -558,12 +558,12 @@ simulate_model <- function(
       # Getting sick
       paf_cvd_smoking <-  paf(prev_smoking, rr_cvd_smoking)
       paf_cvd_inactivity <- paf(prev_inactivity, rr_cvd_inactivity)
-      paf_cvd_obesity <-paf(prev_obesity, rr_cvd_obesity)
+      paf_cvd_bmi <-paf(prev_bmi, rr_cvd_bmi)
       paf_cvd_alcohol <- paf(prev_alcohol, rr_cvd_alcohol)
       
       p_pop_cvd_0_nm <- (1 - (1 - comm_smoking * paf_cvd_smoking) *
                            (1 - comm_inactivity * paf_cvd_inactivity) *
-                           (1 - comm_obesity * paf_cvd_obesity) *
+                           (1 - comm_bmi * paf_cvd_bmi) *
                            (1 - comm_alcohol * paf_cvd_alcohol))
       p_pop_cvd_0 <- (1 - (1 - cpaf_diet_cvd) * (1 - p_pop_cvd_0_nm))
       
@@ -680,20 +680,20 @@ simulate_model <- function(
           heal_comorb_cvd = heal_comorb_cvd,
           
           prev_alcohol = prev_alcohol,
-          prev_obesity = prev_obesity,
+          prev_bmi = prev_bmi,
           prev_smoking = prev_smoking,
           prev_inactivity = prev_inactivity,
           
           paf_cvd_smoking = paf_cvd_smoking,
           paf_cvd_inactivity = paf_cvd_inactivity, 
-          paf_cvd_obesity = paf_cvd_obesity,
+          paf_cvd_bmi = paf_cvd_bmi,
           paf_cvd_alcohol = paf_cvd_alcohol,
           cpaf_diet_cvd = cpaf_diet_cvd,
           p_pop_cvd = p_pop_cvd,
           
           paf_cancer_smoking = paf_cancer_smoking,
           paf_cancer_inactivity = paf_cancer_inactivity,
-          paf_cancer_obesity = paf_cancer_obesity,
+          paf_cancer_bmi = paf_cancer_bmi,
           paf_cancer_alcohol = paf_cancer_alcohol,
           cpaf_diet_cancer = cpaf_diet_cancer,
           p_pop_cancer = p_pop_cancer,
@@ -1006,7 +1006,7 @@ simulate_model <- function(
         prev_inactivity <- dat_par$prev_inactivity[year == FINISH &
                                                      sex == sex_ & age == age_,
                                                    prev]
-        prev_obesity <- dat_par$prev_obesity[year == FINISH & sex == sex_ &
+        prev_bmi <- dat_par$prev_bmi[year == FINISH & sex == sex_ &
                                                age == age_, prev]
         
         # Calculate cPAF for diet
@@ -1026,10 +1026,10 @@ simulate_model <- function(
                                             y0=1, x1=cfact_endyear,
                                             y1=unname(cfact["cfact_inactivity"])),
                                 1)
-        prev_obesity <- pmin(prev_obesity *
+        prev_bmi <- pmin(prev_bmi *
                                piecewise(x=FINISH, x0=cfact_startyear, y0=1,
                                          x1=cfact_endyear,
-                                         y1=unname(cfact["cfact_obesity"])), 1)
+                                         y1=unname(cfact["cfact_bmi"])), 1)
         
         cfact_food_0 <- c(fruit  = 1.0,
                           wholegrains = 1.0,
@@ -1068,20 +1068,20 @@ simulate_model <- function(
           
           rr_cancer_smoking = unname(rr["rr_cancer_smoking"]),
           rr_cancer_inactivity = unname(rr["rr_cancer_inactivity"]),
-          rr_cancer_obesity = unname(rr["rr_cancer_obesity"]),
+          rr_cancer_bmi = unname(rr["rr_cancer_bmi"]),
           rr_cancer_alcohol = unname(rr["rr_cancer_alcohol"]),
           rr_cvd_smoking = unname(rr["rr_cvd_smoking"]),
           rr_cvd_inactivity = unname(rr["rr_cvd_inactivity"]),
-          rr_cvd_obesity = unname(rr["rr_cvd_obesity"]),
+          rr_cvd_bmi = unname(rr["rr_cvd_bmi"]),
           rr_cvd_alcohol = unname(rr["rr_cvd_alcohol"]),
           comm_smoking = unname(communalities["smoking"]),
           comm_alcohol = unname(communalities["alcohol"]),
-          comm_obesity = unname(communalities["obesity"]),
+          comm_bmi = unname(communalities["bmi"]),
           comm_inactivity = unname(communalities["inactivity"]),
           prev_smoking = prev_smoking,
           prev_alcohol = prev_alcohol,
           prev_inactivity = prev_inactivity,
-          prev_obesity = prev_obesity,
+          prev_bmi = prev_bmi,
           
           calibration_cancer = calibration_cancer,
           calibration_cvd = calibration_cvd,
@@ -1195,32 +1195,32 @@ simulate_model <- function(
           dr_cvd = tmp[lastrow]$dr_cvd,
           dr_comorb = tmp[lastrow]$dr_comorb,
           prev_alcohol = tmp[lastrow]$prev_alcohol,
-          prev_obesity = tmp[lastrow]$prev_obesity,
+          prev_bmi = tmp[lastrow]$prev_bmi,
           prev_smoking = tmp[lastrow]$prev_smoking,
           prev_inactivity = tmp[lastrow]$prev_inactivity,
           
-          paf_cvd_smoking = fifelse(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
+          paf_cvd_smoking = fifelse(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
                                     tmp[lastrow]$paf_cvd_smoking, 0.0),
-          paf_cvd_inactivity = fifelse(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
+          paf_cvd_inactivity = fifelse(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
                                        tmp[lastrow]$paf_cvd_inactivity, 0.0),
-          paf_cvd_obesity = fifelse(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
-                                    tmp[lastrow]$paf_cvd_obesity, 0.0),
-          paf_cvd_alcohol = fifelse(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
+          paf_cvd_bmi = fifelse(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
+                                    tmp[lastrow]$paf_cvd_bmi, 0.0),
+          paf_cvd_alcohol = fifelse(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
                                     tmp[lastrow]$paf_cvd_alcohol, 0.0),
-          cpaf_diet_cvd = fifelse(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
+          cpaf_diet_cvd = fifelse(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high,
                                   tmp[lastrow]$cpaf_diet_cvd, 0.0),
           p_pop_cvd = tmp[lastrow]$p_pop_cvd,
           
-          paf_cancer_smoking = fifelse(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+          paf_cancer_smoking = fifelse(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
                                        tmp[lastrow]$paf_cancer_smoking, 0.0),
-          paf_cancer_inactivity = fifelse(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+          paf_cancer_inactivity = fifelse(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
                                           tmp[lastrow]$paf_cancer_inactivity,
                                           0.0),
-          paf_cancer_obesity = fifelse(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
-                                       tmp[lastrow]$paf_cancer_obesity, 0.0),
-          paf_cancer_alcohol = fifelse(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+          paf_cancer_bmi = fifelse(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+                                       tmp[lastrow]$paf_cancer_bmi, 0.0),
+          paf_cancer_alcohol = fifelse(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
                                        tmp[lastrow]$paf_cancer_alcohol, 0.0),
-          cpaf_diet_cancer = fifelse(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+          cpaf_diet_cancer = fifelse(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
                                      tmp[lastrow]$cpaf_diet_cancer, 0.0),
           p_pop_cancer = tmp[lastrow]$p_pop_cancer,
           paf_cancer_other = tmp[lastrow]$paf_cancer_other,
@@ -1255,10 +1255,10 @@ simulate_model <- function(
                                0.0, icost_unit_index_cvd * (tmp[lastrow]$s_cvd + tmp[lastrow]$s_comorb))
         )]
         # Write cPAF for diet with the right cutoff
-        p_cancer <- ifelse(rep(age_ > age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
+        p_cancer <- ifelse(rep(age_ >= age_cutoff_cancer & age_ <= age_cutoff_cancer_high,
                                length(pafs_diet_cancer)),
                            pafs_diet_cancer, pafs_diet_cancer * 0)
-        p_cvd <- ifelse(rep(age_ > age_cutoff_cvd & age_ <= age_cutoff_cvd_high, length(pafs_diet_cvd)),
+        p_cvd <- ifelse(rep(age_ >= age_cutoff_cvd & age_ <= age_cutoff_cvd_high, length(pafs_diet_cvd)),
                         pafs_diet_cvd, pafs_diet_cvd * 0)
         dat[year == FINISH & sex == sex_ & age == age_,
             paste("prev", names(prev_diet_use), sep = "_") :=
