@@ -3,8 +3,8 @@
   "calibrate_cpaf_cvd" : 0,
   "cpaf_cancer" : 0.18,
   "cpaf_cvd" : 0.39,
-  "age_cutoff_cancer" : 39,
-  "age_cutoff_cvd" : 39,
+  "age_cutoff_cancer" : 40,
+  "age_cutoff_cvd" : 40,
   "age_cutoff_cancer_high" : 80,
   "age_cutoff_cvd_high" : 80,
   "dcost_total_cancer": 23045957724,
@@ -18,11 +18,11 @@
   "rr" : {
     "rr_cancer_smoking" : 1.34,
     "rr_cancer_inactivity" : 1.09,
-    "rr_cancer_obesity" : 1.04,
+    "rr_cancer_bmi" : 1.04,
     "rr_cancer_alcohol" : 1.042,
     "rr_cvd_smoking" : 1.85,
     "rr_cvd_inactivity" : 1.25,
-    "rr_cvd_obesity" : 1.27,
+    "rr_cvd_bmi" : 1.27,
     "rr_cvd_alcohol" : 1.046
   },
   
@@ -45,7 +45,7 @@
   "communalities" : {
     "smoking" : 1.0,
     "inactivity" : 1.0,
-    "obesity" : 1.0,
+    "bmi" : 1.0,
     "alcohol" : 1.0
   }
   

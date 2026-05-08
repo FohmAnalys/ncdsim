@@ -4,7 +4,7 @@ NCDSim är en simuleringsmodell för att göra framskrivningar av cancer och hj�
 
 Modellpopulationen baseras på SCB:s befolkningsregisterdata (LISA). Data om sjukdomsfall har hämtats från Cancerregistret och patientregistret hos Socialstyrelsen. Prevalenser för icke-kost-relaterade riskfaktorer baseras på skattningar från Folkhälsomyndighetens surveyundersökning Nationella folkhälsoenkäten. Kostrelaterade riskfaktorer baseras på skattningar från Livsmedelsverkets surveyundersökning Riksmaten. Relativa risker kopplade till riskfaktorerna baseras på Bauer et al. (2024), Carr et al. (2024), Freisling m.fl. (2020), Garcia m.fl. (2020), Global Burden of Disease 2019 (2020), Lankester et al. (2021) och Yi-Jie Wang m.fl. (2020).
 
-En teknisk dokumentation av modellen finns [här](https://www.folkhalsomyndigheten.se/contentassets/4a8b81da030747a294c0491736494dac/ncdsim-simuleringsmodell-framtida-utvecklingen-icke-smittsamma-sjukdomar.pdf). Frågor om modellen kan skickas till analysenheten\@folkhalsomyndigheten.se
+En teknisk dokumentation av modellen finns [här](Documentation/teknisk_dokumentation.pdf). Frågor om modellen kan skickas till analysenheten\@folkhalsomyndigheten.se
 
 Modellen kan köras antingen från ett Shiny-gränssnitt eller direkt i R, se under respektive rubrik nedan. Modellen kan anpassas dels med olika argument till funktionen simulate_model(), och dels med olika parametrar som läses in från fil (se Parametrar) nedan. När modellen körs från gränssnittet kan argumenten och vissa av parametrarna justeras därifrån. En fördel med att köra modellen från gränssnittet är att man också kan visualisera resultaten där.
 

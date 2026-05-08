@@ -139,10 +139,10 @@ heal_rate <- setnafill(heal_rate, "const", 0, cols=c("cvd","cancer",
 filter_cols <- c(c("sex", "age"), as.character(list_of_years))
 food_prevalences <- fread(paste0(input_path, "prev_diet.csv"), sep = ";")
 prev_smoking <- fread(paste0(input_path, "prev_smoking.csv"), sep = ";")
-prev_obesity <- fread(paste0(input_path, "prev_obesity.csv"), sep = ";")
+prev_bmi <- fread(paste0(input_path, "prev_bmi.csv"), sep = ";")
 prev_alcohol <- fread(paste0(input_path, "prev_alcohol.csv"), sep = ";")
 prev_inactivity <- fread(paste0(input_path, "prev_inactivity.csv"), sep = ";")
-prev_obesity <- prev_obesity[, ..filter_cols]
+prev_bmi <- prev_bmi[, ..filter_cols]
 prev_alcohol <- prev_alcohol[, ..filter_cols]
 prev_inactivity <- prev_inactivity[, ..filter_cols]
 prev_smoking <- prev_smoking[, ..filter_cols]
@@ -173,15 +173,15 @@ for (sex_ in 1:2) {
       paf(prev_alcohol[sex == sex_, ..year_], unname(rr["rr_cancer_alcohol"]))
     paf_smoking_c <- unname((communalities["smoking"])) *
       paf(prev_smoking[sex == sex_, ..year_], unname(rr["rr_cancer_smoking"]))
-    paf_obesity_c <- unname((communalities["smoking"])) *
-      paf(prev_obesity[sex == sex_, ..year_], unname(rr["rr_cancer_obesity"]))
+    paf_bmi_c <- unname((communalities["smoking"])) *
+      paf(prev_bmi[sex == sex_, ..year_], unname(rr["rr_cancer_bmi"]))
     paf_inactivity_c <- unname((communalities["inactivity"])) *
       paf(prev_inactivity[sex == sex_, ..year_],
           unname(rr["rr_cancer_inactivity"]))
     cpaf_c <- 1 - (1 - paf_diet_c_) *
       (1 - paf_alcohol_c) *
       (1 - paf_smoking_c) *
-      (1 - paf_obesity_c) *
+      (1 - paf_bmi_c) *
       (1 - paf_inactivity_c)
     paf_cancer[sex == sex_ & year == year_, cpaf := cpaf_c]
     
@@ -190,15 +190,15 @@ for (sex_ in 1:2) {
       paf(prev_alcohol[sex == sex_, ..year_], unname(rr["rr_cvd_alcohol"]))
     paf_smoking_cvd <- unname((communalities["smoking"])) *
       paf(prev_smoking[sex == sex_, ..year_], unname(rr["rr_cvd_smoking"]))
-    paf_obesity_cvd <- unname((communalities["smoking"])) *
-      paf(prev_obesity[sex == sex_, ..year_], unname(rr["rr_cvd_obesity"]))
+    paf_bmi_cvd <- unname((communalities["smoking"])) *
+      paf(prev_bmi[sex == sex_, ..year_], unname(rr["rr_cvd_bmi"]))
     paf_inactivity_cvd <- unname((communalities["inactivity"])) *
       paf(prev_inactivity[sex == sex_, ..year_],
           unname(rr["rr_cvd_inactivity"]))
     cpaf_cvd <- 1 - (1 - paf_diet_cvd_) *
       (1 - paf_alcohol_cvd) *
       (1 - paf_smoking_cvd) *
-      (1 - paf_obesity_cvd) *
+      (1 - paf_bmi_cvd) *
       (1 - paf_inactivity_cvd)
     paf_cvd[sex == sex_ & year == year_, cpaf := cpaf_cvd]
     
