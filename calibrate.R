@@ -329,7 +329,7 @@ for (sex_ in 1:2){
                 age >= age_cutoff_cvd & age <= age_cutoff_cvd_high, cpaf_cancer_comorb := lb_cancer_cvd]
     paf_other[year == y & sex == sex_ &
                 (age < age_cutoff_cvd | age > age_cutoff_cvd_high), cpaf_cancer_comorb := res_cancer_cvd]
-    lb_cvd_cancer <- ir_cvd_cancer - c_cvd_c*paf_slice_c
+    lb_cvd_cancer <- ir_cvd_cancer - c_cvd_cancer*paf_slice_c
     res_cvd_cancer <- ir_mean[sex == sex_ &
                              (age < age_cutoff_cancer | age > age_cutoff_cancer_high), ir_cvd_cancer]
     paf_other[year == y & sex == sex_ &
