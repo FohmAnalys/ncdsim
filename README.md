@@ -53,7 +53,7 @@ output <- simulate_model(startyear = 2021,
 
 För att köra ett alternativscenario, sätt argumentet is_baseline till FALSE, när simulate_model() anropas, och ange en sökväg till en befintlig baslinjekörning med argumentet baseline_parameters. För att ändra riskfaktorsprevalenserna och hur förändringarna fasas in , använd följande argument:
 
--   cfact: en vektor med skalningsfaktorer för icke-kostrelaterade riskfaktorprevalenser. Utgångsvärdena är 1, och en prevalens kan t.ex. dubbleras om värdet sätts till 2.
+-   cfact: en vektor med skalningsfaktorer för de icke-kostrelaterade riskfaktorprevalenserna som kan regleras via gränssnittet. Det förinställda värdet är 1, och förekomsten av en riskfator kan t.ex. dubbleras om värdet sätts till 2, eller halveras om det sätts till 0,5. Parametern är utformad så att riskfaktorprevalensen (för varje ålders- och könsgrupp) aldrig överstiger 100 procent. Därmed kan t.ex. en dubblering av cfact få mindre genomslag än förväntat om det finns flera grupper som "slår i taket" för riskfaktorn. UV-strålning fungerar annorlunda än övriga riskfaktorer, på så vis att och cfact_uv reglerar tillskrivningsfaktorn (PAF) istället för riskfaktorprevalensen, men skalad på ett så att den ändras proportionellt till en tänkt prevalens, likt övriga riskfaktorer. Parametern cfact_uv saknar dock en övre gräns och kan i extremfallet ökas tills tillskrivningsfaktorn för UV-exponering når 1.
 
 -   cfact_food: som cfact för kostfaktorerna
 
@@ -66,14 +66,15 @@ Här är ett exempel på ett scenario där prevalensen för obesitas sänks till
 ``` r
 source("ncdsim.R")
 
-output <- simulate_model(baseyear = 2021, 
+output <- simulate_model(startyear = 2021, 
                          endyear = 2060, 
                          baseline_parameters = 'path/to/my_parameters.json', 
                          cfact = 
                           c(cfact_smoking = 1.0,
                             cfact_alcohol = 1.0,
                             cfact_inactivity = 1.0,
-                            cfact_obesity = 0.5),
+                            cfact_bmi = 0.5,
+                            cfact_uv = 1.0),
                          cfact_food = 
                           c(fruit  = 1.0,
                             wholegrains  = 1.0,

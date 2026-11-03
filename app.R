@@ -152,16 +152,19 @@ info_text_alcohol <- switch(lang,
 label_slider_inactivity <- switch(lang,
                                   "eng" = "Insufficient physical activity", 
                                   "swe" = "Otillräcklig fysisk aktivitet")
-
 info_text_inactivity <- switch(lang, 
                     "eng" = "< 150 minutes moderate physical activity per week",
                     "swe" = "< 150 minuter måttlig fysisk aktivitet per vecka")
 
 label_slider_bmi <- switch(lang, "eng" = "Overweight", "swe" = "Övervikt")
-
 info_text_bmi <- switch(lang, 
                             "eng" = "BMI > 25",
                             "swe" = "BMI > 25")
+
+label_slider_uv <- switch(lang, "eng" = "UV radiation", "swe" = "UV-strålning")
+info_text_uv <- switch(lang, 
+                        "eng" = "Total exposure to UV radiation linked to cancer",
+                        "swe" = "Total exponering mot UV-strålning kopplad till cancer")
 
 label_slider_fruit <- switch(lang, "eng" = "Fruit", "swe" = "Frukt")
 info_text_fruit <- switch(lang, 
@@ -197,6 +200,7 @@ baseline_slider_names <-
     "cfact_alcohol_1",
     "cfact_inactivity_1",
     "cfact_bmi_1",
+    "cfact_uv_1",
     "cfact_fruit_1",
     "cfact_wholegrains_1",
     "cfact_greens_1",
@@ -215,6 +219,7 @@ scenario_slider_names <-
     "cfact_alcohol_",
     "cfact_inactivity_",
     "cfact_bmi_",
+    "cfact_uv_",
     "cfact_fruit_",
     "cfact_wholegrains_",
     "cfact_greens_",
@@ -404,12 +409,14 @@ all_var_names <- c(
   "paf_cvd_inactivity",
   "paf_cvd_bmi",
   "paf_cvd_alcohol",
+  "paf_cvd_uv",
   "cpaf_diet_cvd",
   "p_pop_cvd",
   "paf_cancer_smoking",
   "paf_cancer_inactivity",
   "paf_cancer_bmi",
   "paf_cancer_alcohol",
+  "paf_cancer_uv",
   "cpaf_diet_cancer",
   "p_pop_cancer",
   "paf_cancer_other",
@@ -763,7 +770,8 @@ run_scen <- function(scen, input, sim_status, baseline_active,
         cfact_smoking = input[[paste0("cfact_smoking_", scen)]],
         cfact_alcohol = input[[paste0("cfact_alcohol_", scen)]],
         cfact_inactivity = input[[paste0("cfact_inactivity_", scen)]],
-        cfact_bmi = input[[paste0("cfact_bmi_", scen)]]
+        cfact_bmi = input[[paste0("cfact_bmi_", scen)]],
+        cfact_uv = input[[paste0("cfact_uv_", scen)]]
       ),
       cfact_food = c(
         fruit = input[[paste0("cfact_fruit_", scen)]],
@@ -909,7 +917,8 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
   scen_ids <- dat_wide[, unique(scen_id)]
   n_scen <- length(scen_ids)
   
-  if (measure %in% c("abs_diff", "rel_diff", "abs_diff_pop_share", "rel_diff_pop_share") & n_scen<2) {
+  if (measure %in% c("abs_diff", "rel_diff", "abs_diff_pop_share", 
+                     "rel_diff_pop_share") & n_scen<2) {
     showNotification(switch(lang,
           "eng" = "Please load a comparison scenario", 
           "swe" = "Du behöver ladda ett jämförelsescenario för denna diagramtyp"
@@ -1118,8 +1127,8 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                          group_names[group]
   )
   
-  ## Create graph with population shares (per capita)
-  if (measure == "pop_share") {
+  ## Create graphs with population shares or diffs or proportions of pop shares
+  if (measure %in% c("pop_share", "abs_diff_pop_share", "rel_diff_pop_share")) {
     
     dat_by_group[variable == var_to_plot, value := value / 
                    dat_by_group[variable == "pop_total", value]]
@@ -1134,17 +1143,19 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                             "eng" = "Cost (SEK), per capita",
                             "swe" = "Kostnad (SEK), per capita")
       format_fun <- int_print
-    } else if (var_to_plot %in% c("s_ncd",
-                                  "f_ncd",
-                                  "s_cancer",
-                                  "f_cancer",
-                                  "s_cvd",
-                                  "f_cvd")
+    } else if (var_to_plot %in% c("ongoing_cases_ncd",
+                                  "new_cases_ncd",
+                                  "ongoing_cases_cancer",
+                                  "new_cases_cancer",
+                                  "ongoing_cases_cvd",
+                                  "new_cases_cvd",
+                                  "ongoing_cases_comorb",
+                                  "new_cases_comorb")
     ) {
-      dat_by_group[variable == var_to_plot, value := value * 10^3]
+      dat_by_group[variable == var_to_plot, value := value * 10^5]
       ylab_custom <- switch(lang,
-                            "eng" = "Cases per 1 000 population",
-                            "swe" = "Fall per tusen invånare")
+                            "eng" = "Cases per 100 000 population",
+                            "swe" = "Fall per 100 000 invånare")
       format_fun <- int_print
     } else if (var_to_plot %in% c(
                                   "deaths_ncd",
@@ -1154,16 +1165,16 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                   "deaths_comorb"
                                   )
     ) {
-      dat_by_group[variable == var_to_plot, value := value * 10^3]
+      dat_by_group[variable == var_to_plot, value := value * 10^5]
       ylab_custom <- switch(lang,
-                            "eng" = "Deaths per 1 000 population",
-                            "swe" = "Dödsfall per tusen invånare")
-      format_fun <- pretty_print_1
+                            "eng" = "Deaths per 100 000 population",
+                            "swe" = "Dödsfall per 100 000 invånare")
+      format_fun <- int_print
     } else if (var_to_plot == "f_born") {
-      dat_by_group[variable == var_to_plot, value := value * 10^3]
+      dat_by_group[variable == var_to_plot, value := value * 10^5]
       ylab_custom <- switch(lang,
-                            "eng" = "Births per 1 000 population",
-                            "swe" = "Födslar per tusen invånare")
+                            "eng" = "Births per 100 000 population",
+                            "swe" = "Födslar per 100 000 invånare")
       format_fun <- int_print
     }
     else {
@@ -1172,7 +1183,57 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                             "swe" = paste0(ylab_custom, ", befolkningsandel")
       )
     }
-  }
+    
+    ## Create graph as a diff of pop shares vz baseline
+    if (measure == "abs_diff_pop_share" & n_scen > 1) {
+      
+      # dat_by_group[variable == var_to_plot, value := value / 
+      #                dat_by_group[variable == "pop_total", value]]
+      
+      for (scen in n_scen:2) {
+        dat_by_group[scen_id == scen_ids[scen], value := value -
+                       dat_by_group[scen_id == scen_ids[1], value]]
+      }
+      
+      dat_by_group <- dat_by_group[scen_id!="scen_1", ]
+      
+      legend_labels <- setdiff(legend_labels, 
+                               grep(scen_names[1], legend_labels, value=TRUE))
+      ylim_custom <- c(NA, NA)
+      line_colours <- line_colours[-1]
+      ylab_custom <- paste0(ylab_custom, 
+                            switch(lang,
+                                    "eng" = ", scenario minus baseline",
+                                    "swe" = ", scenario minus baslinje")
+      )
+    } # if (measure == "abs_diff_pop_share" & n_scen > 1)
+    
+    
+    ## Create graph as a proportion of pop shares vz baseline
+    if (measure == "rel_diff_pop_share" & n_scen > 1) {
+      
+      # dat_by_group[variable == var_to_plot, value := value / 
+      #                dat_by_group[variable == "pop_total", value]]
+      
+      for (scen in n_scen:2) {
+        dat_by_group[scen_id == scen_ids[scen], 
+                  value := value / dat_by_group[scen_id == scen_ids[1], value]]
+      }
+      dat_by_group <- dat_by_group[scen_id!="scen_1", ]
+      
+      legend_labels <- setdiff(legend_labels, 
+                               grep(scen_names[1], legend_labels, value=TRUE))
+      ylim_custom <- c(NA, NA)
+      line_colours <- line_colours[-1]
+      ylab_custom <- paste0(ylab_custom, 
+                            switch(lang,
+                                      "eng" = ", scenario to baseline ratio",
+                                      "swe" = ", kvot scenario/baslinje")
+      )
+      format_fun <- pretty_print
+    } # if (measure == "rel_diff_pop_share" & n_scen > 1)
+    
+  } # if (measure %in% c("pop_share", "abs_diff_pop_share", "rel_diff_pop_share"))
   
   ## Create graph diffed in absolutes vz baseline
   if (measure == "abs_diff" & n_scen > 1) {
@@ -1211,54 +1272,6 @@ create_plot <- function(dat_list, plot_type, var_to_plot, group, measure, years,
                                         "eng" = ", scenario to baseline ratio",
                                         "swe" = ", kvot scenario/baslinje"
     )
-    )
-  }
-  
-  ## Create graph diffed as a proportion vz baseline
-  if (measure == "abs_diff_pop_share" & n_scen > 1) {
-    
-    dat_by_group[variable == var_to_plot, value := value / 
-                   dat_by_group[variable == "pop_total", value]]
-    
-    for (scen in n_scen:2) {
-      dat_by_group[scen_id == scen_ids[scen], value := value -
-                     dat_by_group[scen_id == scen_ids[1], value]]
-    }
-    
-    dat_by_group <- dat_by_group[scen_id!="scen_1", ]
-    
-    legend_labels <- setdiff(legend_labels, 
-                             grep(scen_names[1], legend_labels, value=TRUE))
-    ylim_custom <- c(NA, NA)
-    line_colours <- line_colours[-1]
-    ylab_custom <- paste0(ylab_custom, switch(lang,
-                  "eng" = ", scenario minus baseline, population shares",
-                  "swe" = ", scenario minus baslinje, befolkningsandelar"
-      )
-    )
-  }
-  
-  
-  ## Create graph as a proportion of baseline, of population shares
-  if (measure == "rel_diff_pop_share" & n_scen > 1) {
-    
-    dat_by_group[variable == var_to_plot, value := value / 
-                   dat_by_group[variable == "pop_total", value]]
-    
-    for (scen in n_scen:2) {
-      dat_by_group[scen_id == scen_ids[scen], 
-                   value := value / dat_by_group[scen_id == scen_ids[1], value]]
-    }
-    dat_by_group <- dat_by_group[scen_id!="scen_1", ]
-    
-    legend_labels <- setdiff(legend_labels, 
-                             grep(scen_names[1], legend_labels, value=TRUE))
-    ylim_custom <- c(NA, NA)
-    line_colours <- line_colours[-1]
-    ylab_custom <- paste0(ylab_custom, switch(lang,
-                    "eng" = ", scenario to baseline ratio of population shares",
-                    "swe" = ", kvot scenario/baslinje, befolkningsandelar"
-      )
     )
   }
   
@@ -1499,7 +1512,12 @@ bsCollapse(id = "risk-factors-baseline",
                            risk_factor_slider("cfact_bmi_1",
                                               label = label_slider_bmi,
                                               info_text = info_text_bmi
+                           ),
+                           risk_factor_slider("cfact_uv_1",
+                                              label = label_slider_uv,
+                                              info_text = info_text_uv
                            )
+                           
            ), # end bsCollapsePanel("Non-dietary"
            bsCollapsePanel(switch(lang, 
                                   "eng" = "(+) Dietary", 
@@ -2358,6 +2376,11 @@ bsCollapsePanel(paste0("(+) Scenario ", scen),
                                             paste0("cfact_bmi_", scen),
                                             label = label_slider_bmi,
                                             info_text = info_text_bmi
+                                          ),
+                                          risk_factor_slider(
+                                            paste0("cfact_uv_", scen),
+                                            label = label_slider_uv,
+                                            info_text = info_text_uv
                                           )
                           ), # end bsCollapsePanel("Non-dietary"
                           bsCollapsePanel(switch(lang, 

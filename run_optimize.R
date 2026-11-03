@@ -9,10 +9,11 @@ rm(list = ls())
 source("ncdsim.R")
 
 start <- Sys.time()
-outp <- simulate_model(startyear = 2022, endyear = 2026,cfact_startyear = 2025,nsteps = 50,
+outp <- simulate_model(startyear = 2024, endyear = 2028,cfact_startyear = 2025,nsteps = 50,
                        cfact_endyear = 2026,
                        is_baseline = T)
 print(Sys.time() - start)
+
 
 # The validation script is sourced. Defines validate_ncdsim().
 source("validation.R")

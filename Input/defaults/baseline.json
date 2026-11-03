@@ -20,10 +20,12 @@
     "rr_cancer_inactivity" : 1.09,
     "rr_cancer_bmi" : 1.04,
     "rr_cancer_alcohol" : 1.042,
+    "paf_cancer_uv" : 0.077,
     "rr_cvd_smoking" : 1.85,
     "rr_cvd_inactivity" : 1.25,
     "rr_cvd_bmi" : 1.27,
-    "rr_cvd_alcohol" : 1.046
+    "rr_cvd_alcohol" : 1.046,
+    "paf_cvd_uv" : 0.0
   },
   
   "rr_cancer_diet" : {
